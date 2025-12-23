@@ -42,6 +42,7 @@ export default function GondolasPage() {
       ]);
 
       setGondolas(gondolasData);
+      console.log("DEBUG ids:", gondolasData.map(g => ({ idLoja: g.idLoja, tipo: typeof g.idLoja })));
       setStores(storesData);
       setUsuarios(usuariosData);
     } catch (err) {
@@ -86,10 +87,10 @@ const handleSubmit = async (data: GondolaFormData) => {
   const filteredGondolas =
     selectedStore === "all"
       ? gondolas
-      : gondolas.filter((g) => g.idLoja === selectedStore);
+      : gondolas.filter((g) => Number(g.idLoja) === Number(selectedStore));
 
   const getStoreName = (storeId: number) => {
-    const store = stores.find((s) => s.id === storeId);
+    const store = stores.find((s) => Number(s.id) === Number(storeId));
     return store ? store.name : "Loja não encontrada";
   };
 
