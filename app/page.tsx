@@ -1,65 +1,217 @@
-import Image from "next/image";
+// === INÍCIO ARQUIVO AJUSTADO: app/page.tsx ===
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import { StoreEntity, GondolaEntity } from "@/entities/all";
+import { Gondola, ProductPositionEntity } from "@/entities/all";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Store, LayoutGrid, Package, AlertTriangle, LucideIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { ProductPosition } from "@/entities/ProductPosition";
+import Link from "next/link";
+import { createPageUrl } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { GondolaProduto, GondolaProdutoEntity } from "@/entities/GondolaProduto";
+
+type Stats = {
+  stores: number;
+  gondolas: number;
+  products: number;
+  lowStock: number;
+};
+
+type StatCardProps = {
+  title: string;
+  value: number;
+  icon: LucideIcon;
+  color: string;          // ex: "bg-blue-600"
+  link?: string;
+  isLoading: boolean;
+};
+
+function StatCard({ title, value, icon: Icon, color, link, isLoading }: StatCardProps) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <Card className="relative overflow-hidden border-0 shadow-lg shadow-slate-200/50 hover:shadow-xl transition-all duration-300 bg-white">
+      <div
+        className={`absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8 ${color} rounded-full opacity-5`}
+      />
+      <CardHeader className="p-6 relative">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm font-medium text-slate-500 mb-2">
+              {title}
+            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-20" />
+            ) : (
+              <CardTitle className="text-4xl font-bold text-slate-900">
+                {value}
+              </CardTitle>
+            )}
+          </div>
+          <div className={`p-4 rounded-2xl bg-opacity-10 ${color}`}>
+            <Icon className={`w-6 h-6 ${color.replace("bg-", "text-")}`} />
+          </div>
+        </div>
+        {link && (
+          <Link href={link}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-4 text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-0"
+            >
+              Ver detalhes →
+            </Button>
+          </Link>
+        )}
+      </CardHeader>
+    </Card>
+  );
+}
+
+export default function DashboardPage() {
+  const [stats, setStats] = useState<Stats>({
+    stores: 0,
+    gondolas: 0,
+    products: 0,
+    lowStock: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    setIsLoading(true);
+  const stores = await StoreEntity.list();
+  const gondolas = await GondolaEntity.list();
+
+  // === ALTERAÇÃO: buscar produtos por gôndola e somar ===
+    const produtosPorGondola = await Promise.all(
+      gondolas.map((g) => GondolaProdutoEntity.listByGondola(g.idGondola))
+    );
+  
+      const produtos = produtosPorGondola.flat();
+  
+    // Sugestão de alerta: estoque atual < mínimo
+    const lowStock = produtos.filter((p) => (p.estoqueAtual ?? 0) < (p.minimo ?? 0)).length;
+  
+    setStats({
+      stores: stores.length,
+      gondolas: gondolas.length,
+      products: produtos.length,
+      lowStock,
+    });
+  
+    setIsLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            Dashboard
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-600">
+            Visão geral do sistema de gerenciamento
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Total de Lojas"
+            value={stats.stores}
+            icon={Store}
+            color="bg-blue-600"
+            link={createPageUrl("Lojas")}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title="Total de Gôndolas"
+            value={stats.gondolas}
+            icon={LayoutGrid}
+            color="bg-purple-600"
+            link={createPageUrl("Gondolas")}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title="Produtos Cadastrados"
+            value={stats.products}
+            icon={Package}
+            color="bg-emerald-600"
+            link={createPageUrl("Produtos")}
+            isLoading={isLoading}
+          />
+          <StatCard
+            title="Alertas de Estoque"
+            value={stats.lowStock}
+            icon={AlertTriangle}
+            color="bg-amber-600"
+            isLoading={isLoading}
+          />
         </div>
-      </main>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">
+                Ações Rápidas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link href={createPageUrl("Lojas")}>
+                <Button className="w-full justify-start bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-500/20">
+                  <Store className="w-4 h-4 mr-2" />
+                  Cadastrar Nova Loja
+                </Button>
+              </Link>
+              <Link href={createPageUrl("Gondolas")}>
+                <Button className="w-full justify-start bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md shadow-purple-500/20">
+                  <LayoutGrid className="w-4 h-4 mr-2" />
+                  Cadastrar Nova Gôndola
+                </Button>
+              </Link>
+              <Link href={createPageUrl("Produtos")}>
+                <Button className="w-full justify-start bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-500/20">
+                  <Package className="w-4 h-4 mr-2" />
+                  Adicionar Produtos
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg shadow-slate-200/50 bg-gradient-to-br from-blue-600 to-blue-700 text-white">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold">
+                Bem-vindo ao GondolaTrack
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-blue-100 mb-4">
+                Sistema completo para gerenciar suas lojas, gôndolas e produtos
+                com eficiência.
+              </p>
+              <ul className="space-y-2 text-blue-50 text-sm">
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  Controle de estoque em tempo real
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  Relatórios de reposição automáticos
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  Fitas de conferência personalizadas
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
+// === FIM ARQUIVO AJUSTADO ===
