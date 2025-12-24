@@ -4,6 +4,13 @@
 
 /* ===== PRINT (FITA) ===== */
 @media print {
+
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
   /* Esconde tudo */
   body * {
     visibility: hidden !important;

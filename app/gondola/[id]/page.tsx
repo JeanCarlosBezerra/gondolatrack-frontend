@@ -256,7 +256,7 @@ export default function GondolaDetailPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-8 space-y-6 print:p-0 print:space-y-0">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Detalhe da Gôndola</h1>
@@ -366,6 +366,10 @@ export default function GondolaDetailPage() {
             </tbody>
           </table>
         </div>
+        <div
+          id="print-area-conferencia"
+          className={printMode === "conferencia" ? "hidden print:block text-sm print:break-after-page" : "hidden"}
+        ></div>
       </div>
 
       {/* ===================== PRINT: REPOSIÇÃO ===================== */}
@@ -416,6 +420,10 @@ export default function GondolaDetailPage() {
             </tbody>
           </table>
         </div>
+        <div
+          id="print-area-reposicao"
+          className={printMode === "reposicao" ? "hidden print:block text-sm print:break-after-page" : "hidden"}
+        ></div>
       </div>
 
       <Card className="border-0 shadow-lg shadow-slate-200/50 bg-white">

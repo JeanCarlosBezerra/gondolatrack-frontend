@@ -31,6 +31,14 @@ export default function StoreCard({ store, onEdit, onDelete }: StoreCardProps) {
                 <h3 className="text-xl font-bold text-slate-900">
                   {store.name}
                 </h3>
+                <div className="mt-1 text-sm text-slate-600 space-y-1">
+                  <div>
+                    <span className="font-medium">Código:</span> {store.codigoErp ?? "-"}
+                  </div>
+                  <div>
+                    <span className="font-medium">Empresa (DB2):</span> {store.idEmpresa ?? "-"}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
