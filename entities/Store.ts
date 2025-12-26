@@ -27,9 +27,9 @@ type RawStore = {
  */
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const API_BASE =
-  API_URL.trim().length > 0
-    ? `${API_URL.replace(/\/$/, "")}/api`
-    : process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
+  (process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+    : "http://localhost:3001/api");
 
 function mapRaw(raw: any): Store {
   return {
