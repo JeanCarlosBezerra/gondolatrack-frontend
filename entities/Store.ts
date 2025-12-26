@@ -19,7 +19,17 @@ type RawStore = {
   atualizadoEm: string | null;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
+/**
+ * Prioridade:
+ * 1) NEXT_PUBLIC_API_URL  -> ex: http://172.28.7.6:3001
+ * 2) NEXT_PUBLIC_API_BASE -> ex: http://172.28.7.6:3001/api
+ * 3) fallback local
+ */
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+const API_BASE =
+  API_URL.trim().length > 0
+    ? `${API_URL.replace(/\/$/, "")}/api`
+    : process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
 
 function mapRaw(raw: any): Store {
   return {
@@ -33,7 +43,6 @@ function mapRaw(raw: any): Store {
 }
 
 export class StoreEntity {
-  // mantém compatibilidade: algumas telas chamavam list("--created_date")
   static async list(): Promise<Store[]> {
     const res = await fetch(`${API_BASE}/lojas`, { cache: "no-store" });
     if (!res.ok) throw new Error("Erro ao carregar lojas");
@@ -41,22 +50,25 @@ export class StoreEntity {
     const json = await res.json();
 
     // aceita: [ ... ] ou { data: [ ... ] }
-    const rawList: RawStore[] = Array.isArray(json) ? json : (json?.data ?? []);
+    const rawList: RawStore[] = Array.isArray(json) ? json : json?.data ?? [];
 
     return rawList.map(mapRaw);
   }
 
-
-  static async create(data: { nome: string; codigoErp: string; idEmpresa: number | null }): Promise<Store> {
-  const res = await fetch(`${API_BASE}/lojas`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      nome: data.nome,
-      codigoErp: data.codigoErp,
-      idEmpresa: data.idEmpresa,
-    }),
-  });
+  static async create(data: {
+    nome: string;
+    codigoErp: string;
+    idEmpresa: number | null;
+  }): Promise<Store> {
+    const res = await fetch(`${API_BASE}/lojas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nome: data.nome,
+        codigoErp: data.codigoErp,
+        idEmpresa: data.idEmpresa,
+      }),
+    });
 
     if (!res.ok) {
       const text = await res.text();
