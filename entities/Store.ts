@@ -1,4 +1,5 @@
 // === INÍCIO ARQUIVO AJUSTADO: entities/Store.ts ===
+import { API_BASE } from "@/lib/api";
 
 export type Store = {
   id: number;
@@ -25,13 +26,6 @@ type RawStore = {
  * 2) NEXT_PUBLIC_API_BASE -> ex: http://172.28.7.6:3001/api
  * 3) fallback local
  */
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-    : (typeof window !== "undefined"
-        ? `http://${window.location.hostname}:3001/api`
-        : "http://localhost:3001/api");
 
 function mapRaw(raw: any): Store {
   return {

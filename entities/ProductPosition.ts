@@ -1,4 +1,5 @@
 // === INÍCIO ARQUIVO AJUSTADO: entities/ProductPosition.ts ===
+import { API_BASE } from "@/lib/api";
 
 // Modelo usado NA TELA (mantendo os nomes antigos para não quebrar o código)
 export type ProductPosition = {
@@ -23,8 +24,6 @@ type RawProductPosition = {
   criadoEm: string;
   atualizadoEm: string | null;
 };
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
 
 function mapRaw(raw: RawProductPosition): ProductPosition {
   return {

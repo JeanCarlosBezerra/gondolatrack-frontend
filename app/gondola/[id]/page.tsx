@@ -11,6 +11,7 @@ import { Trash2 } from "lucide-react";
 import { GondolaEntity, type Gondola } from "@/entities/Gondola";
 import { StoreEntity, type Store } from "@/entities/Store";
 import { UsuarioEntity, type Usuario } from "@/entities/Usuarios";
+import { API_BASE } from "@/lib/api";
 
 type PrintMode = "conferencia" | "reposicao" | null;
 
@@ -30,7 +31,6 @@ type ReposicaoItem = {
   repor: number;            // sugestão de reposição
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
 
 export default function GondolaDetailPage() {
   const params = useParams();

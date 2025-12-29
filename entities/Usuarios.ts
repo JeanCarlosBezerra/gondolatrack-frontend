@@ -1,7 +1,6 @@
 // === INÍCIO ARQUIVO: entities/Usuario.ts ===
+import { API_BASE } from "@/lib/api";
 export type Usuario = { idUsuario: number; nomeUsuario: string };
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
 
 export class UsuarioEntity {
   static async list(): Promise<Usuario[]> {

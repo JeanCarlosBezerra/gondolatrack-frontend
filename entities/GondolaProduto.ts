@@ -1,4 +1,7 @@
 // === INÍCIO ARQUIVO: entities/GondolaProduto.ts ===
+
+import { API_BASE } from "@/lib/api";
+
 export type GondolaProduto = {
   idGondolaProduto: number;
   idGondola: number;
@@ -13,8 +16,6 @@ export type GondolaProduto = {
 };
 
 type RawGondolaProduto = any;
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:3001/api";
 
 function mapRaw(raw: RawGondolaProduto): GondolaProduto {
   // suporta tanto camelCase quanto snake_case/DB
