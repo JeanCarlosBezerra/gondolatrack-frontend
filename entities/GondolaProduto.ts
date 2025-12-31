@@ -37,7 +37,7 @@ export class GondolaProdutoEntity {
     
   static async listByGondola(idGondola: number): Promise<GondolaProduto[]> {
     if (!idGondola) throw new Error("Endpoint exige idGondola.");
-    const res = await fetch(`${API_BASE}/gondolas/${idGondola}/produtos`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, { cache: "no-store" });
     if (!res.ok) throw new Error("Erro ao carregar produtos da gôndola");
     const data = (await res.json()) as RawGondolaProduto[];
     return data.map(mapRaw);
@@ -47,7 +47,7 @@ export class GondolaProdutoEntity {
     idGondola: number,
     payload: { ean: string; minimo: number; maximo: number },
   ): Promise<GondolaProduto> {
-    const res = await fetch(`${API_BASE}/gondolas/${idGondola}/produtos`, {
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -64,7 +64,7 @@ export class GondolaProdutoEntity {
       // === ALTERAÇÃO: delete ===
     static async delete(idGondola: number, idGondolaProduto: number): Promise<void> {
       const res = await fetch(
-        `${API_BASE}/gondolas/${idGondola}/produtos/${idGondolaProduto}`,
+        `${API_BASE()}/gondolas/${idGondola}/produtos/${idGondolaProduto}`,
         { method: "DELETE", headers: { "Content-Type": "application/json" } }
       );
 

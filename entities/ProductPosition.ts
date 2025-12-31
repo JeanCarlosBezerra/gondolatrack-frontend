@@ -52,7 +52,7 @@ export class ProductPositionEntity {
     }
 
     const res = await fetch(
-      `${API_BASE}/posicoes-gondola?idGondola=${idGondola}`,
+      `${API_BASE()}/posicoes-gondola?idGondola=${idGondola}`,
       { cache: "no-store" },
     );
 
@@ -72,7 +72,7 @@ export class ProductPositionEntity {
     estoqueMaximo?: number | null;
     estoqueAtual?: number | null;
   }): Promise<ProductPosition> {
-    const res = await fetch(`${API_BASE}/posicoes-gondola`, {
+    const res = await fetch(`${API_BASE()}/posicoes-gondola`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -97,7 +97,7 @@ export class ProductPositionEntity {
 
   // Remove uma posição
   static async delete(id: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/posicoes-gondola/${id}`, {
+    const res = await fetch(`${API_BASE()}/posicoes-gondola/${id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });

@@ -43,7 +43,7 @@ function mapRaw(raw: any): Gondola {
 export class GondolaEntity {
   static async list(idLoja?: number): Promise<Gondola[]> {
     const qs = idLoja ? `?idLoja=${idLoja}` : "";
-    const res = await fetch(`${API_BASE}/gondolas${qs}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE()}/gondolas${qs}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Erro ao carregar gôndolas");
 
     const json = await res.json();
@@ -53,7 +53,7 @@ export class GondolaEntity {
 
 
   static async create(data: GondolaFormData): Promise<Gondola> {
-    const res = await fetch(`${API_BASE}/gondolas`, {
+    const res = await fetch(`${API_BASE()}/gondolas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -70,14 +70,14 @@ export class GondolaEntity {
   }
 
   static async get(idGondola: number): Promise<Gondola> {
-    const res = await fetch(`${API_BASE}/gondolas/${idGondola}`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}`, { cache: "no-store" });
     if (!res.ok) throw new Error("Erro ao carregar gôndola");
     const raw = await res.json();
     return mapRaw(raw);
   }
 
   static async update(idGondola: number, data: GondolaFormData): Promise<Gondola> {
-    const res = await fetch(`${API_BASE}/gondolas/${idGondola}`, {
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -96,7 +96,7 @@ export class GondolaEntity {
   }
 
   static async delete(idGondola: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/gondolas/${idGondola}`, { method: "DELETE" });
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}`, { method: "DELETE" });
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Erro ao remover gôndola: ${res.status} - ${text}`);

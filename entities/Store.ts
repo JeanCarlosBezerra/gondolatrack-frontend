@@ -40,7 +40,7 @@ function mapRaw(raw: any): Store {
 
 export class StoreEntity {
   static async list(): Promise<Store[]> {
-    const res = await fetch(`${API_BASE}/lojas`, { cache: "no-store" });
+    const res = await fetch(`${API_BASE()}/lojas`, { cache: "no-store" });
     if (!res.ok) throw new Error("Erro ao carregar lojas");
 
     const json = await res.json();
@@ -56,7 +56,7 @@ export class StoreEntity {
     codigoErp: string;
     idEmpresa: number | null;
   }): Promise<Store> {
-    const res = await fetch(`${API_BASE}/lojas`, {
+    const res = await fetch(`${API_BASE()}/lojas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -76,7 +76,7 @@ export class StoreEntity {
   }
 
   static async delete(idLoja: number): Promise<void> {
-    const res = await fetch(`${API_BASE}/lojas/${idLoja}`, { method: "DELETE" });
+    const res = await fetch(`${API_BASE()}/lojas/${idLoja}`, { method: "DELETE" });
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Erro ao remover loja: ${res.status} - ${text}`);
