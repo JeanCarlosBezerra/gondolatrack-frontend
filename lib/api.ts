@@ -1,17 +1,15 @@
 // lib/api.ts
 export function getApiBase(): string {
-  // 1) Preferência absoluta: NEXT_PUBLIC_API_URL = http://172.28.7.6:3001
+  // Use SEMPRE a variável pública. Evita hydration mismatch.
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (envUrl && envUrl.trim()) return `${envUrl.replace(/\/$/, "")}/api`;
 
-  // 2) Se estiver no browser, usa o hostname atual (IP/host que abriu o front)
-  // e fixa a porta 3001 do backend.
-  if (typeof window !== "undefined") {
-    return `http://${window.location.hostname}:3001/api`;
-  }
+  // Se não existir, assume backend local.
+  // (Mesmo no client e no server => não diverge)
+  const base = (envUrl && envUrl.trim())
+    ? envUrl.replace(/\/$/, "")
+    : "http://localhost:3001";
 
-  // 3) Fallback SSR/dev local
-  return "http://localhost:3001/api";
+  return `${base}/api`;
 }
 
 export const API_BASE = getApiBase();

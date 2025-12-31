@@ -10,8 +10,8 @@ export function createPageUrl(pageName: string): string {
     case "Gondolas":
     case "Gôndolas":
       return "/gondola";
-    case "Produtos":
-      return "/produtos";
+    case "Abastecimento":
+      return "/abastecimento";
     default:
       return "/";
   }
