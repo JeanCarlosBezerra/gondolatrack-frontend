@@ -67,6 +67,7 @@ export default function ProdutosPage() {
   const [loadingGerar, setLoadingGerar] = useState(false);
   const [loadingItens, setLoadingItens] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const selecionadoAbastecimentoId = selectedAbastecimento?.idAbastecimento ?? null;
 
   // ======= 1) carregar lojas =======
   useEffect(() => {
@@ -103,6 +104,9 @@ export default function ProdutosPage() {
   // ======= 2) carregar lista de abastecimentos ao trocar loja =======
   useEffect(() => {
     if (!idLoja) return;
+    setSelectedAbastecimento(null);
+    setItens([]);
+    carregarAbastecimentos(idLoja);
 
     (async () => {
       try {
@@ -158,6 +162,41 @@ export default function ProdutosPage() {
     })();
   }, [selectedAbastecimento]);
 
+  async function carregarAbastecimentos(lojaId: number) {
+  setLoadingLista(true);
+  setError(null);
+  try {
+    const r = await fetch(`${API_BASE}/abastecimentos?idLoja=${lojaId}`);
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    setAbastecimentos(data ?? []);
+
+    // opcional: se não tem selecionado, seleciona o primeiro
+    if ((data?.length ?? 0) > 0 && !selectedAbastecimento) {
+      setSelectedAbastecimento(data[0]);
+    }
+  } catch (e: any) {
+    setError(e?.message ?? String(e));
+  } finally {
+    setLoadingLista(false);
+  }
+}
+
+async function carregarItens(idAbastecimento: string) {
+  setLoadingItens(true);
+  setError(null);
+  try {
+    const r = await fetch(`${API_BASE}/abastecimentos/${idAbastecimento}/itens`);
+    if (!r.ok) throw new Error(await r.text());
+    const data = await r.json();
+    setItens(data ?? []);
+  } catch (e: any) {
+    setError(e?.message ?? String(e));
+  } finally {
+    setLoadingItens(false);
+  }
+}
+
   // ======= 4) gerar abastecimento =======
   async function onGerar() {
     if (!idLoja) return;
@@ -198,6 +237,50 @@ export default function ProdutosPage() {
       setLoadingGerar(false);
     }
   }
+
+  async function handleConfirmar() {
+  if (!selecionadoAbastecimentoId) return;
+
+  const payload = {
+    itens: itens.map((it) => ({
+      idAbastecimentoItem: it.idAbastecimentoItem,
+      qtdSelecionada: it.qtdSelecionada ?? "0.000",
+    })),
+  };
+
+  const r1 = await fetch(`${API_BASE}/abastecimentos/${selecionadoAbastecimentoId}/itens`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!r1.ok) {
+    const t = await r1.text();
+    alert(`Erro ao salvar itens: ${t}`);
+    return;
+  }
+
+  const r2 = await fetch(`${API_BASE}/abastecimentos/${selecionadoAbastecimentoId}/confirmar`, {
+    method: "POST",
+  });
+
+  if (!r2.ok) {
+    const t = await r2.text();
+    alert(`Erro ao confirmar: ${t}`);
+    return;
+  }
+
+  // === ALTERADO: recarrega
+  await carregarAbastecimentos(Number(idLoja));
+  await carregarItens(selecionadoAbastecimentoId);
+
+  alert("Abastecimento confirmado com sucesso.");
+}
+
+function handleImprimir() {
+  if (!selecionadoAbastecimentoId) return;
+  window.open(`${API_BASE}/abastecimentos/${selecionadoAbastecimentoId}/print`, "_blank");
+}
 
   // ======= 5) editar qtdSelecionada no grid (local, sem salvar ainda) =======
   function updateQtdSelecionada(idAbastecimentoItem: string, newValue: string) {
@@ -270,7 +353,23 @@ export default function ProdutosPage() {
             style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", width: 160 }}
           />
         </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <button
+          onClick={handleConfirmar}
+          disabled={!selecionadoAbastecimentoId}
+          className="rounded-md px-4 py-2 border"
+        >
+          Confirmar
+        </button>
 
+        <button
+          onClick={handleImprimir}
+          disabled={!selecionadoAbastecimentoId}
+          className="rounded-md px-4 py-2 border"
+        >
+          Imprimir
+        </button>
+      </div>    
         <button
           onClick={onGerar}
           disabled={!idLoja || loadingGerar}
