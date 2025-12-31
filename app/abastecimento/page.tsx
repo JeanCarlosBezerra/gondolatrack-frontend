@@ -76,7 +76,7 @@ export default function ProdutosPage() {
         setLoadingLojas(true);
         setError(null);
 
-        const resp = await fetch('/lojas', { cache: "no-store" });
+        const resp = await fetch(`${API_BASE}/lojas`, { cache: "no-store" })
         if (!resp.ok) throw new Error(`Falha ao carregar lojas (${resp.status})`);
         const data = await resp.json();
 
