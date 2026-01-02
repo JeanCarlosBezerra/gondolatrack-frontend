@@ -5,7 +5,8 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Pencil, Trash2 } from "lucide-react";
+// >>> ALTERADO: adicionado Store (ícone) no import
+import { Pencil, Trash2, Store as StoreIcon } from "lucide-react";
 import type { Store } from "@/entities/Store";
 
 type StoreCardProps = {
@@ -26,26 +27,30 @@ export default function StoreCard({ store, onEdit, onDelete }: StoreCardProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
+                {/* >>> ADICIONADO: ícone no card de loja */}
+                <StoreIcon className="w-6 h-6 text-white" />
               </div>
+
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
                   {store.name}
                 </h3>
                 <div className="mt-1 text-sm text-slate-600 space-y-1">
                   <div>
-                    <span className="font-medium">Código:</span> {store.codigoErp ?? "-"}
+                    <span className="font-medium">Código:</span>{" "}
+                    {store.codigoErp ?? "-"}
                   </div>
                   <div>
-                    <span className="font-medium">Empresa (DB2):</span> {store.idEmpresa ?? "-"}
+                    <span className="font-medium">Empresa (DB2):</span>{" "}
+                    {store.idEmpresa ?? "-"}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-3">
-
-
           <div className="flex gap-2 pt-4 border-t border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="outline"

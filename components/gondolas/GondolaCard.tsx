@@ -51,9 +51,6 @@ export default function GondolaCard({
                   {gondola.nome}
                 </h3>
 
-                <Badge className="mt-1 bg-purple-100 text-purple-700 border-purple-200">
-                  {gondola.totalPosicoes} posições
-                </Badge>
               </div>
             </div>
           </div>

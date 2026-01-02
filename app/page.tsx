@@ -141,7 +141,6 @@ export default function DashboardPage() {
             value={stats.products}
             icon={Package}
             color="bg-emerald-600"
-            link={createPageUrl("Produtos")}
             isLoading={isLoading}
           />
           <StatCard
@@ -173,10 +172,10 @@ export default function DashboardPage() {
                   Cadastrar Nova Gôndola
                 </Button>
               </Link>
-              <Link href={createPageUrl("Produtos")}>
+              <Link href="/abastecimento">
                 <Button className="w-full justify-start bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-md shadow-emerald-500/20">
                   <Package className="w-4 h-4 mr-2" />
-                  Adicionar Produtos
+                  Gerar Abastecimento
                 </Button>
               </Link>
             </CardContent>

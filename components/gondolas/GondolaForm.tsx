@@ -151,17 +151,6 @@ export default function GondolaForm({
             </div>
           </div>
 
-          {/* Total Posições */}
-          <div>
-            <Label className="text-slate-700">Total de Posições</Label>
-            <Input
-              type="number"
-              value={String(totalPosicoes)}
-              onChange={(e) => setTotalPosicoes(Number(e.target.value))}
-              min={1}
-            />
-          </div>
-
           <div className="flex gap-2 justify-end pt-2">
             <Button type="button" variant="outline" onClick={onCancel}>
               <XCircle className="w-4 h-4 mr-2" />
