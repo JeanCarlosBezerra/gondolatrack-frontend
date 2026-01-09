@@ -277,6 +277,13 @@ async function carregarItens(idAbastecimento: string) {
   alert("Abastecimento confirmado com sucesso.");
 }
 
+function handleExportarXlsx() {
+  if (!selecionadoAbastecimentoId) return;
+
+  // download direto (mais simples e funciona bem)
+  window.location.href = `${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/export/xlsx`;
+}
+
 function handleImprimir() {
   if (!selecionadoAbastecimentoId) return;
   window.open(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/print`, "_blank");
@@ -549,8 +556,28 @@ function handleImprimir() {
     >
       Imprimir
     </button>
-  </div>
-</div>
+
+    <button
+      onClick={handleExportarXlsx}
+      disabled={!selecionadoAbastecimentoId || selectedAbastecimento?.status !== "CONFIRMADO"}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "1px solid #ddd",
+        background: "white",
+        fontWeight: 700,
+        cursor:
+          !selecionadoAbastecimentoId || selectedAbastecimento?.status !== "CONFIRMADO"
+            ? "not-allowed"
+            : "pointer",
+        opacity:
+          !selecionadoAbastecimentoId || selectedAbastecimento?.status !== "CONFIRMADO" ? 0.6 : 1,
+      }}
+    >
+      Exportar XLSX
+    </button>
+      </div>
+    </div>
     </div>
   );
 }
