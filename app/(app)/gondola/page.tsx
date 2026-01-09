@@ -187,12 +187,13 @@ const handleSubmit = async (data: GondolaFormData) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGondolas.map((g) => (
               <GondolaCard
-                key={g.idGondola}
-                gondola={g}
-                storeName={getStoreName(g.idLoja)}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+              key={g.idGondola}
+              gondola={g}
+              storeName={getStoreName(g.idLoja)}
+              usuarios={usuarios}     // ✅ AQUI
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
             ))}
           </div>
         )}

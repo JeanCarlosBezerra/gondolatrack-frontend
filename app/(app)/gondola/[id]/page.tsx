@@ -272,9 +272,12 @@ export default function GondolaDetailPage() {
             Recarregar
           </Button>
 
-          {/* CONFERÊNCIA (fita) */}
-          <Button variant="outline" onClick={printConferencia} disabled={printing || isLoading}>
-            {printing && printMode === "conferencia" ? "Imprimindo..." : "Conferência"}
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/gondola/${idGondola}/conferencia`)}
+            disabled={isLoading}
+          >
+            Conferência
           </Button>
 
           {/* REPOSIÇÃO */}

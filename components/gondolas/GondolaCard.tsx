@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { LayoutGrid, User, Tag, MapPin, Trash2 } from "lucide-react";
 import type { Gondola } from "@/entities/Gondola";
 import { useRouter } from "next/navigation";
+import { Usuario } from "@/entities/Usuarios";
 
 interface GondolaCardProps {
   gondola: Gondola;
+  usuarios: Usuario[];
   storeName: string;
   onEdit: (gondola: Gondola) => void;
   onDelete: (id: number) => void;
@@ -20,6 +22,7 @@ interface GondolaCardProps {
 export default function GondolaCard({
   gondola,
   storeName,
+  usuarios,
   onEdit,
   onDelete,
 }: GondolaCardProps) {
@@ -28,6 +31,14 @@ export default function GondolaCard({
   const corredor = (gondola as any).corredorSecao ?? null;
   const marca = (gondola as any).marca ?? null;
   const idResponsavel = (gondola as any).idResponsavel ?? null;
+  const responsavelNome =
+  usuarios.find((u) => Number(u.idUsuario) === Number(idResponsavel))
+    ?.nomeUsuario
+  ?? (idResponsavel ? `#${idResponsavel}` : "—");
+
+  console.log("ID Responsável:", idResponsavel);
+  console.log("Usuários carregados:", usuarios);
+
 
   return (
     <motion.div
@@ -79,9 +90,9 @@ export default function GondolaCard({
           {/* Responsável (por enquanto mostra ID; se você já tiver nome, eu ajusto) */}
           <div className="flex items-center gap-2 text-sm text-slate-700">
             <User className="w-4 h-4 text-slate-500" />
-            <span className="font-medium">Responsável:</span>{" "}
+            <span className="font-medium">Responsável:</span>
             <span className="text-slate-600">
-              {idResponsavel ? `#${idResponsavel}` : "—"}
+              {responsavelNome}
             </span>
           </div>
 

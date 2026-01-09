@@ -316,76 +316,86 @@ function handleImprimir() {
         </div>
       )}
 
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap", marginBottom: 16 }}>
-        <div>
-          <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Loja</label>
-          <select
-            value={idLoja ?? ""}
-            onChange={(e) => setIdLoja(Number(e.target.value))}
-            disabled={loadingLojas}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", minWidth: 340 }}
-          >
-            {lojas.map((l) => (
-              <option key={l.idLoja} value={l.idLoja}>
-                {l.idLoja} - {l.nome}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Filtros + Ações */}
+<div
+  style={{
+    display: "flex",
+    gap: 12,
+    alignItems: "end",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  }}
+>
+  {/* ===== ESQUERDA: filtros ===== */}
+  <div style={{ display: "flex", gap: 12, alignItems: "end", flexWrap: "wrap" }}>
+    <div>
+      <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Loja</label>
+      <select
+        value={idLoja ?? ""}
+        onChange={(e) => setIdLoja(Number(e.target.value))}
+        disabled={loadingLojas}
+        style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", minWidth: 340 }}
+      >
+        {lojas.map((l) => (
+          <option key={l.idLoja} value={l.idLoja}>
+            {l.idLoja} - {l.nome}
+          </option>
+        ))}
+      </select>
+    </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Dias de venda</label>
-          <input
-            type="number"
-            value={diasVenda}
-            onChange={(e) => setDiasVenda(Number(e.target.value))}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", width: 140 }}
-          />
-        </div>
+    <div>
+      <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Dias de venda</label>
+      <input
+        type="number"
+        value={diasVenda}
+        onChange={(e) => setDiasVenda(Number(e.target.value))}
+        style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", width: 140 }}
+      />
+    </div>
 
-        <div>
-          <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Cobertura (dias)</label>
-          <input
-            type="number"
-            value={coberturaDias}
-            onChange={(e) => setCoberturaDias(Number(e.target.value))}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", width: 160 }}
-          />
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <button
-          onClick={handleConfirmar}
-          disabled={!selecionadoAbastecimentoId}
-          className="rounded-md px-4 py-2 border"
-        >
-          Confirmar
-        </button>
+    <div>
+      <label style={{ display: "block", fontSize: 12, color: "#555", marginBottom: 4 }}>Cobertura (dias)</label>
+      <input
+        type="number"
+        value={coberturaDias}
+        onChange={(e) => setCoberturaDias(Number(e.target.value))}
+        style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd", width: 160 }}
+      />
+    </div>
+  </div>
 
-        <button
-          onClick={handleImprimir}
-          disabled={!selecionadoAbastecimentoId}
-          className="rounded-md px-4 py-2 border"
-        >
-          Imprimir
-        </button>
-      </div>    
-        <button
-          onClick={onGerar}
-          disabled={!idLoja || loadingGerar}
-          style={{
-            padding: "10px 14px",
-            borderRadius: 10,
-            border: "1px solid #1a7f37",
-            background: "#1a7f37",
-            color: "white",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          {loadingGerar ? "Gerando..." : "Gerar abastecimento"}
-        </button>
+  {/* ===== DIREITA: ações ===== */}
+  <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+    {/* Contexto do selecionado (para ficar óbvio o alvo do Confirmar/Imprimir) */}
+    <div style={{ fontSize: 12, color: "#666" }}>
+      {selecionadoAbastecimentoId
+        ? `Selecionado: #${selecionadoAbastecimentoId} — ${selectedAbastecimento?.status ?? ""}`
+        : "Selecione um abastecimento para Confirmar/Imprimir"}
+    </div>
+
+    {/* ===== DIREITA: ação principal ===== */}
+    <div style={{ display: "flex", alignItems: "end", gap: 10 }}>
+      <button
+        onClick={onGerar}
+        disabled={!idLoja || loadingGerar}
+        style={{
+          padding: "10px 14px",
+          borderRadius: 10,
+          border: "1px solid #1a7f37",
+          background: "#1a7f37",
+          color: "white",
+          fontWeight: 700,
+          cursor: !idLoja || loadingGerar ? "not-allowed" : "pointer",
+          opacity: !idLoja || loadingGerar ? 0.7 : 1,
+        }}
+      >
+        {loadingGerar ? "Gerando..." : "Gerar abastecimento"}
+      </button>
+    </div>
       </div>
+    </div>
 
       {/* Lista de abastecimentos */}
       <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 16 }}>
@@ -436,9 +446,8 @@ function handleImprimir() {
               </div>
             </div>
 
-            {/* Aqui depois entra: Confirmar / Exportar */}
             <div style={{ fontSize: 12, color: "#777" }}>
-              (próximo passo: botão “Confirmar” e salvar qtdSelecionada)
+              Dica: ajuste a coluna “Selecionado” e clique em “Confirmar” para salvar.
             </div>
           </div>
 
@@ -491,6 +500,57 @@ function handleImprimir() {
           )}
         </div>
       </div>
+      <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 6,
+    marginBottom: 10,
+    flexWrap: "wrap",
+  }}
+>
+  <div style={{ fontSize: 12, color: "#666" }}>
+    {selecionadoAbastecimentoId
+      ? `Selecionado: #${selecionadoAbastecimentoId} — ${selectedAbastecimento?.status ?? ""}`
+      : "Selecione um abastecimento na lista à esquerda para Confirmar/Imprimir"}
+  </div>
+
+  <div style={{ display: "flex", gap: 10 }}>
+    <button
+      onClick={handleConfirmar}
+      disabled={!selecionadoAbastecimentoId}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "1px solid #ddd",
+        background: "white",
+        fontWeight: 700,
+        cursor: !selecionadoAbastecimentoId ? "not-allowed" : "pointer",
+        opacity: !selecionadoAbastecimentoId ? 0.6 : 1,
+      }}
+    >
+      Confirmar
+    </button>
+
+    <button
+      onClick={handleImprimir}
+      disabled={!selecionadoAbastecimentoId}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "1px solid #ddd",
+        background: "white",
+        fontWeight: 700,
+        cursor: !selecionadoAbastecimentoId ? "not-allowed" : "pointer",
+        opacity: !selecionadoAbastecimentoId ? 0.6 : 1,
+      }}
+    >
+      Imprimir
+    </button>
+  </div>
+</div>
     </div>
   );
 }

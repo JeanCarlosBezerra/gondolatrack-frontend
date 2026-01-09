@@ -4,6 +4,9 @@
 
 /* ===== PRINT (FITA) ===== */
 @media print {
+   .print\:hidden {
+    display: none !important;
+  }
 
   .no-print {
     display: none !important;
