@@ -49,6 +49,7 @@ export function Sidebar() {
         <SidebarLink href="/lojas" label="Lojas" />
         <SidebarLink href="/gondola" label="Gôndolas" />
         <SidebarLink href="/abastecimento" label="Abastecimento" />
+        <SidebarLink href="/conferencias" label="Conferências" />
       </nav>
     </aside>
   );
