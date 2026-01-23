@@ -221,14 +221,21 @@ export default function ConferenciasPage() {
                     <td className="p-2 text-right">{r.qtdItens}</td>
                     <td className="p-2 text-right">{r.totalConferido}</td>
                     <td className="p-2 text-right">
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          router.push(`/gondola/${r.idGondola}/conferencia/print/${r.idConferencia}`)
-                        }
-                      >
-                        Ver / Imprimir
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/gondola/${r.idGondola}/conferencia/print/${r.idConferencia}`)}
+                        >
+                          Ver / Imprimir
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          onClick={() => router.push(`/gondola/${r.idGondola}/conferencia/divergencias/${r.idConferencia}`)}
+                        >
+                          Divergências
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

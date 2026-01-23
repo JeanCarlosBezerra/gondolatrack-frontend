@@ -19,6 +19,13 @@
     visibility: hidden !important;
   }
 
+  @media print {
+  table th, table td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+}
+
   /* Mostra só as áreas de impressão */
   #print-area-conferencia,
   #print-area-conferencia *,
