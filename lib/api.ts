@@ -1,10 +1,10 @@
 // lib/api.ts
 export function getApiBase(): string {
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  const base = process.env.NEXT_PUBLIC_API_BASE;
+  if (base && base.trim()) return base.replace(/\/$/, "");
 
-  if (envUrl && envUrl.trim()) {
-    return `${envUrl.replace(/\/$/, "")}/api`;
-  }
+  const url = process.env.NEXT_PUBLIC_API_URL;
+  if (url && url.trim()) return `${url.replace(/\/$/, "")}/api`;
 
   if (typeof window !== "undefined") {
     return `http://${window.location.hostname}:3001/api`;
@@ -13,5 +13,4 @@ export function getApiBase(): string {
   return "http://localhost:3001/api";
 }
 
-// ✅ Mantém o nome API_BASE, mas agora é função (não congela)
 export const API_BASE = () => getApiBase();
