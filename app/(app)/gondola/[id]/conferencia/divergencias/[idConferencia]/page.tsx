@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 
 type ConfItem = {
   idItem?: number;
@@ -10,14 +11,19 @@ type ConfItem = {
   ean?: string | null;
   descricao?: string | null;
 
-  // contagem
   qtdConferida?: string | number | null;
 
-  // estoques do sistema (podem vir com nomes diferentes dependendo do backend)
-  estoqueLoja?: string | number | null;
-  estoqueCd?: string | number | null;
-  estoqueTotal?: string | number | null;
+  // novos campos (preferenciais)
+  estoqueVenda?: string | number | null;
+  estoqueDeposito?: string | number | null;
+  estoqueLojaTotal?: string | number | null;
+
+  // compat legado (se ainda vier do backend antigo)
+  estoqueLoja?: string | number | null;   // antes era total da loja
+  estoqueCd?: string | number | null;     // antes era CD (não confundir com deposito)
+  estoqueTotal?: string | number | null;  // antes era loja+cd
 };
+
 
 type ConferenciaDTO = {
   idConferencia: number;
@@ -27,6 +33,10 @@ type ConferenciaDTO = {
   nome?: string | null;
   itens: ConfItem[];
 };
+
+type ConferenciaApiResponse =
+  | ConferenciaDTO
+  | (Omit<ConferenciaDTO, "itens"> & { data: ConfItem[] });
 
 function toNum(v: any): number | null {
   if (v === null || v === undefined || v === "") return null;
@@ -60,12 +70,13 @@ export default function ConferenciaDetalhePage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [conf, setConf] = useState<ConferenciaDTO | null>(null);
+  const [realtime, setRealtime] = useState(false);
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   async function apiGet<T>(path: string): Promise<T> {
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -92,15 +103,18 @@ export default function ConferenciaDetalhePage() {
     setErr(null);
 
     try {
-      // 1) Busca a conferência (seu backend já tem este GET)
-      // Controller: @Get(':idGondola/conferencia/:idConferencia')
-      const data = await apiGet<ConferenciaDTO>(
-        `/api/gondolas/${idGondola}/conferencia/${idConferencia}/divergencias`
-      );
+     const data = await apiGet<ConferenciaApiResponse>(
+       `/api/gondolas/${idGondola}/conferencia/${idConferencia}/divergencias${realtime ? "?realtime=1" : ""}`
+     );
+
 
       // garante array
-      const itens = Array.isArray((data as any)?.itens) ? (data as any).itens : [];
-      setConf({ ...(data as any), itens });
+      const itens =
+      Array.isArray((data as any)?.itens) ? (data as any).itens :
+      Array.isArray((data as any)?.data) ? (data as any).data :
+      [];
+
+    setConf({ ...(data as any), itens });
     } catch (e: any) {
       setErr(e?.message || "Erro ao carregar conferência.");
     } finally {
@@ -111,7 +125,7 @@ export default function ConferenciaDetalhePage() {
   useEffect(() => {
     carregar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idGondola, idConferencia]);
+  }, [idGondola, idConferencia, realtime]);
 
   const rows = useMemo(() => {
     const itens = conf?.itens ?? [];
@@ -120,78 +134,71 @@ export default function ConferenciaDetalhePage() {
       const qtd = toNum(it.qtdConferida);
 
       // tenta ler estoque de loja / cd / total (qualquer nome que vier do backend)
-      const estLoja =
-        toNum((it as any).estoqueLoja) ??
-        toNum((it as any).estoqueVenda) ??
-        null;
+    const estoqueVenda =
+      toNum((it as any).estoqueVenda) ??
+      null;
 
-      const estCd =
-        toNum((it as any).estoqueCd) ??
-        toNum((it as any).estoqueDeposito) ??
-        null;
+    const estoqueDeposito =
+      toNum((it as any).estoqueDeposito) ??
+      null;
 
-      const estTotal =
-        toNum((it as any).estoqueTotal) ??
-        (estLoja !== null || estCd !== null
-          ? (estLoja ?? 0) + (estCd ?? 0)
-          : null);
-
-      // divergências
-      const divLoja = estLoja !== null && qtd !== null ? qtd - estLoja : null;
-      const divTotal = estTotal !== null && qtd !== null ? qtd - estTotal : null;
-
-      return {
-        ...it,
-        _qtd: qtd,
-        _estLoja: estLoja,
-        _estCd: estCd,
-        _estTotal: estTotal,
-        _divLoja: divLoja,
-        _divTotal: divTotal,
-      };
+    // total da loja preferencial
+    const estoqueLojaTotal =
+      toNum((it as any).estoqueLojaTotal) ??
+      // compat antigo: se backend antigo mandava estoqueLoja como total
+      toNum((it as any).estoqueLoja) ??
+      // se tiver venda/deposito, soma
+      (estoqueVenda !== null || estoqueDeposito !== null
+        ? (estoqueVenda ?? 0) + (estoqueDeposito ?? 0)
+        : null);
+      
+    // divergência deve ser contra o TOTAL DA LOJA
+    const divLojaTotal =
+      estoqueLojaTotal !== null && qtd !== null ? qtd - estoqueLojaTotal : null;
+      
+    return {
+      ...it,
+      _qtd: qtd,
+      _estVenda: estoqueVenda,
+      _estDeposito: estoqueDeposito,
+      _estLojaTotal: estoqueLojaTotal,
+      _divLoja: divLojaTotal,
+    };
     });
   }, [conf]);
 
   const resumo = useMemo(() => {
-    let qtdItens = 0;
-    let divergentes = 0;
+  let qtdItens = 0;
+  let divergentes = 0;
 
-    let somaQtd = 0;
-    let somaEstLoja = 0;
-    let somaEstTotal = 0;
+  let somaQtd = 0;
+  let somaEstLojaTotal = 0;
 
-    for (const r of rows) {
-      qtdItens += 1;
+  for (const r of rows) {
+    qtdItens += 1;
 
-      const qtd = (r as any)._qtd as number | null;
-      const estLoja = (r as any)._estLoja as number | null;
-      const estTotal = (r as any)._estTotal as number | null;
+    const qtd = (r as any)._qtd as number | null;
+    const estLojaTotal = (r as any)._estLojaTotal as number | null;
 
-      if (qtd !== null) somaQtd += qtd;
-      if (estLoja !== null) somaEstLoja += estLoja;
-      if (estTotal !== null) somaEstTotal += estTotal;
+    if (qtd !== null) somaQtd += qtd;
+    if (estLojaTotal !== null) somaEstLojaTotal += estLojaTotal;
 
-      // considera divergente se diferença de loja (se existir) não for zero
-      const d = (r as any)._divLoja as number | null;
-      if (d !== null && Math.abs(d) > 0.0005) divergentes += 1;
-    }
+    const d = (r as any)._divLoja as number | null;
+    if (d !== null && Math.abs(d) > 0.0005) divergentes += 1;
+  }
 
-    return {
-      qtdItens,
-      divergentes,
-      somaQtd,
-      somaEstLoja,
-      somaEstTotal,
-      diffLoja:
-        rows.length && rows.some((r) => (r as any)._estLoja !== null)
-          ? somaQtd - somaEstLoja
-          : null,
-      diffTotal:
-        rows.length && rows.some((r) => (r as any)._estTotal !== null)
-          ? somaQtd - somaEstTotal
-          : null,
-    };
-  }, [rows]);
+  return {
+    qtdItens,
+    divergentes,
+    somaQtd,
+    somaEstLojaTotal,
+    diffLoja:
+      rows.length && rows.some((r) => (r as any)._estLojaTotal !== null)
+        ? somaQtd - somaEstLojaTotal
+        : null,
+  };
+}, [rows]);
+
 
 function handleImprimir() {
   // garante que o navegador aplique o @media print antes de capturar o preview
@@ -263,6 +270,23 @@ return (
           >
             Imprimir
           </button>
+          <button
+            onClick={() => {
+              setRealtime((v) => !v);
+            }}
+            style={{
+              padding: "10px 14px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              background: realtime ? "#111" : "white",
+              color: realtime ? "white" : "#111",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            {realtime ? "Tempo real: ON" : "Tempo real: OFF"}
+          </button>
+
         </div>
       </div>
 
@@ -308,6 +332,12 @@ return (
               <div>
                 <div style={{ fontSize: 12, color: "#666" }}>Data</div>
                 <div style={{ fontWeight: 800 }}>{fmtDt(conf.criadoEm)}</div>
+                <div>
+  <div style={{ fontSize: 12, color: "#666" }}>Modo</div>
+  <div style={{ fontWeight: 900 }}>
+    {(conf as any).mode === "REALTIME" ? "Tempo real (DB2)" : "Snapshot (na conferência)"}
+  </div>
+</div>
               </div>
               <div>
                 <div style={{ fontSize: 12, color: "#666" }}>Usuário</div>
@@ -352,17 +382,21 @@ return (
                     <th style={th}>Produto</th>
                     <th style={th}>ID / EAN</th>
                     <th style={thRight}>Conferido</th>
-                    <th style={thRight}>Estoque Loja</th>
-                    <th style={thRight}>Dif. Loja</th>
+                    <th style={thRight}>Est. Venda</th>
+                    <th style={thRight}>Est. Dep.</th>
+                    <th style={thRight}>Est. Total</th>
+                    <th style={thRight}>Dif. Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r, idx) => {
                     const qtd = (r as any)._qtd as number | null;
-                    const estLoja = (r as any)._estLoja as number | null;
-                    const dLoja = (r as any)._divLoja as number | null;
+                    const estVenda = (r as any)._estVenda as number | null;
+                    const estDep = (r as any)._estDeposito as number | null;
+                    const estTotal = (r as any)._estLojaTotal as number | null;
+                    const dTotal = (r as any)._divLoja as number | null;
 
-                    const isDiv = dLoja !== null && Math.abs(dLoja) > 0.0005;
+                    const isDiv = dTotal !== null && Math.abs(dTotal) > 0.0005;
 
                     return (
                       <tr key={String((r as any).idItem ?? idx)} style={{ borderTop: "1px solid #f1f1f1" }}>
@@ -380,7 +414,9 @@ return (
                           </div>
                         </td>
                         <td style={tdRight}>{fmt3(qtd)}</td>
-                        <td style={tdRight}>{fmt3(estLoja)}</td>
+                        <td style={tdRight}>{fmt3(estVenda)}</td>
+                        <td style={tdRight}>{fmt3(estDep)}</td>
+                        <td style={tdRight}>{fmt3(estTotal)}</td>
                         <td
                           style={{
                             ...tdRight,
@@ -388,7 +424,7 @@ return (
                             color: isDiv ? "#7a1d1d" : "#1a7f37",
                           }}
                         >
-                          {fmt3(dLoja)}
+                          {fmt3(dTotal)}
                         </td>
                       </tr>
                     );
@@ -401,7 +437,7 @@ return (
             <div className="gt-mobile" style={{ display: "none", gap: 10 }}>
               {rows.map((r, idx) => {
                 const qtd = (r as any)._qtd as number | null;
-                const estLoja = (r as any)._estLoja as number | null;
+                const estLoja = (r as any)._estLojaTotal as number | null;
                 const estCd = (r as any)._estCd as number | null;
                 const estTotal = (r as any)._estTotal as number | null;
                 const dLoja = (r as any)._divLoja as number | null;

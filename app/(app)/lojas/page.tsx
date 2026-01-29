@@ -12,6 +12,7 @@ import { AnimatePresence } from "framer-motion";
 import StoreForm from "@/components/stores/StoreForm";
 import StoreCard from "@/components/stores/StoreCard";
 import { GondolaFormData } from "@/entities/Gondola";
+import { FeatureFlagsEntity } from "@/entities/FeatureFlags";
 
 export default function LojasPage() {
     
@@ -19,10 +20,29 @@ export default function LojasPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [flags, setFlags] = useState<Record<string, boolean>>({});
+  const [loadingFlags, setLoadingFlags] = useState(true);
   
-  useEffect(() => {
-    loadStores();
-  }, []);
+  
+useEffect(() => {
+  (async () => {
+    await Promise.all([loadStores(), loadFlags()]);
+  })();
+}, []);
+
+const loadFlags = async () => {
+  setLoadingFlags(true);
+  try {
+    const me = await FeatureFlagsEntity.me();
+    setFlags(me.flags ?? {});
+  } catch (err) {
+    console.error("Erro loadFlags:", err);
+    // fallback: se falhar, mantém tudo liberado pra não travar a UI
+    setFlags({});
+  } finally {
+    setLoadingFlags(false);
+  }
+};
 
 const handleSubmit = async (data: {
   nome: string;
@@ -61,6 +81,8 @@ const handleEdit = (store: Store) => {
     }
   };
 
+  const canInsertLoja = !loadingFlags && (flags?.MOD_INSERIR_LOJA ?? true);
+
   return (
     <div className="min-h-screen p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -69,16 +91,15 @@ const handleEdit = (store: Store) => {
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Lojas</h1>
             <p className="text-slate-600">Gerencie todas as suas lojas</p>
           </div>
-          <Button
-            onClick={() => {
-              setEditingStore(null);
-              setShowForm(!showForm);
-            }}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Nova Loja
-          </Button>
+          {canInsertLoja && (
+            <Button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Loja
+            </Button>
+          )}
         </div>
 
         <AnimatePresence>

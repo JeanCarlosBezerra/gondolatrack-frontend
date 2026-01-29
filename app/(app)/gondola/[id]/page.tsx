@@ -12,6 +12,7 @@ import { GondolaEntity, type Gondola } from "@/entities/Gondola";
 import { StoreEntity, type Store } from "@/entities/Store";
 import { UsuarioEntity, type Usuario } from "@/entities/Usuarios";
 import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/apiFetch";
 
 type PrintMode = "conferencia" | "reposicao" | null;
 
@@ -159,7 +160,7 @@ export default function GondolaDetailPage() {
   if (!idGondola) return items;
 
   // 1) dispara o refresh (não confia no retorno)
-  const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
+  const res = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
@@ -171,7 +172,7 @@ export default function GondolaDetailPage() {
   }
 
   // 2) agora busca a lista normal (essa SEMPRE é array)
-  const res2 = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, { cache: "no-store" });
+  const res2 = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/produtos`);
   if (!res2.ok) {
     const txt = await res2.text().catch(() => "");
     throw new Error(`Falha ao recarregar produtos após refresh. ${txt}`);
@@ -230,9 +231,7 @@ export default function GondolaDetailPage() {
       const updatedItems = await refreshEstoqueParaImpressao();
       setItems(updatedItems);
 
-      const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/reposicao`, {
-        cache: "no-store",
-      });
+      const res = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/reposicao`);
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");

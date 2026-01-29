@@ -28,12 +28,16 @@ export default function GondolasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState<"all" | number>("all");
 
+  const [selectedStatus, setSelectedStatus] = useState<"all" | "PENDENTE" | "CONFERIDA" | "DIVERGENTE">("all");
+  const [statusMap, setStatusMap] = useState<Record<number, "PENDENTE" | "CONFERIDA" | "DIVERGENTE">>({});
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
     setIsLoading(true);
+    setStatusMap({});
     try {
       const [gondolasData, storesData, usuariosData] = await Promise.all([
         GondolaEntity.list(),
@@ -84,10 +88,15 @@ const handleSubmit = async (data: GondolaFormData) => {
     await loadData();
   };
 
-  const filteredGondolas =
-    selectedStore === "all"
-      ? gondolas
-      : gondolas.filter((g) => Number(g.idLoja) === Number(selectedStore));
+  const filteredGondolas = gondolas.filter((g) => {
+    const okLoja =
+      selectedStore === "all" ? true : Number(g.idLoja) === Number(selectedStore);
+
+    const st = statusMap[g.idGondola] ?? "PENDENTE"; // se ainda não carregou, trata como pendente
+    const okStatus = selectedStatus === "all" ? true : st === selectedStatus;
+
+    return okLoja && okStatus;
+  });
 
   const getStoreName = (storeId: number) => {
     const store = stores.find((s) => Number(s.id) === Number(storeId));
@@ -116,16 +125,16 @@ const handleSubmit = async (data: GondolaFormData) => {
         </div>
 
         {stores.length > 0 && !showForm && (
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-6 flex-wrap">
             <Filter className="w-5 h-5 text-slate-500" />
+        
+            {/* Filtro por Loja */}
             <div className="relative">
               <select
                 className="w-64 appearance-none rounded-md border border-slate-200 bg-white py-2 pl-3 pr-8 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 value={selectedStore === "all" ? "all" : String(selectedStore)}
                 onChange={(e) =>
-                  setSelectedStore(
-                    e.target.value === "all" ? "all" : Number(e.target.value)
-                  )
+                  setSelectedStore(e.target.value === "all" ? "all" : Number(e.target.value))
                 }
               >
                 <option value="all">Todas as Lojas</option>
@@ -134,6 +143,23 @@ const handleSubmit = async (data: GondolaFormData) => {
                     {store.name}
                   </option>
                 ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs">
+                ▼
+              </span>
+            </div>
+              
+            {/* Filtro por Status */}
+            <div className="relative">
+              <select
+                className="w-56 appearance-none rounded-md border border-slate-200 bg-white py-2 pl-3 pr-8 text-sm text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value as any)}
+              >
+                <option value="all">Todos os Status</option>
+                <option value="PENDENTE">Pendente</option>
+                <option value="CONFERIDA">Conferida</option>
+                <option value="DIVERGENTE">Divergente</option>
               </select>
               <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400 text-xs">
                 ▼
@@ -187,13 +213,19 @@ const handleSubmit = async (data: GondolaFormData) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGondolas.map((g) => (
               <GondolaCard
-              key={g.idGondola}
-              gondola={g}
-              storeName={getStoreName(g.idLoja)}
-              usuarios={usuarios}     // ✅ AQUI
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+                key={g.idGondola}
+                gondola={g}
+                storeName={getStoreName(g.idLoja)}
+                usuarios={usuarios}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onStatusLoaded={(idGondola, status) => {
+                  setStatusMap((prev) => {
+                    if (prev[idGondola] === status) return prev;
+                    return { ...prev, [idGondola]: status };
+                  });
+                }}
+              />
             ))}
           </div>
         )}

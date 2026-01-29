@@ -12,6 +12,7 @@ import Link from "next/link";
 import { createPageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { GondolaProduto, GondolaProdutoEntity } from "@/entities/GondolaProduto";
+import { FeatureFlagsEntity } from "@/entities/FeatureFlags";
 
 type Stats = {
   stores: number;
@@ -83,29 +84,43 @@ export default function DashboardPage() {
   }, []);
 
   const loadStats = async () => {
-    setIsLoading(true);
-  const stores = await StoreEntity.list();
-  const gondolas = await GondolaEntity.list();
+  setIsLoading(true);
 
-  // === ALTERAÇÃO: buscar produtos por gôndola e somar ===
-    const produtosPorGondola = await Promise.all(
-      gondolas.map((g) => GondolaProdutoEntity.listByGondola(g.idGondola))
-    );
-  
+  try {
+    const [stores, gondolas, ff] = await Promise.all([
+      StoreEntity.list(),
+      GondolaEntity.list(),
+      FeatureFlagsEntity.me(),
+    ]);
+
+    const modProdutos = ff?.flags?.MOD_PRODUTOS ?? true;
+
+    let products = 0;
+    let lowStock = 0;
+
+    if (modProdutos) {
+      const produtosPorGondola = await Promise.all(
+        gondolas.map((g) => GondolaProdutoEntity.listByGondola(g.idGondola))
+      );
+
       const produtos = produtosPorGondola.flat();
-  
-    // Sugestão de alerta: estoque atual < mínimo
-    const lowStock = produtos.filter((p) => (p.estoqueAtual ?? 0) < (p.minimo ?? 0)).length;
-  
+      products = produtos.length;
+      lowStock = produtos.filter((p) => (p.estoqueAtual ?? 0) < (p.minimo ?? 0)).length;
+    }
+
     setStats({
       stores: stores.length,
       gondolas: gondolas.length,
-      products: produtos.length,
+      products,
       lowStock,
     });
-  
+  } catch (e: any) {
+    // se quiser, aqui você pode exibir toast
+    setStats({ stores: 0, gondolas: 0, products: 0, lowStock: 0 });
+  } finally {
     setIsLoading(false);
-  };
+  }
+};
 
   return (
     <div className="min-h-screen p-6 md:p-8">

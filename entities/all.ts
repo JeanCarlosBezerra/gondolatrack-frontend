@@ -6,3 +6,6 @@ export type { Gondola, GondolaFormData } from "./Gondola";
 
 export { ProductPositionEntity } from "./ProductPosition";
 export type { ProductPosition } from "./ProductPosition";
+
+export { FeatureFlagsEntity } from "./FeatureFlags";
+export type { FeatureFlagsMe } from "./FeatureFlags";

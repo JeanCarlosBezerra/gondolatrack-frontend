@@ -3,6 +3,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 
 type ConfItem = {
   idItem?: number;
@@ -11,10 +12,16 @@ type ConfItem = {
   descricao?: string | null;
   qtdConferida?: string | number | null;
 
+  estoqueVenda?: string | number | null;
+  estoqueDeposito?: string | number | null;
+  estoqueLojaTotal?: string | number | null;
+
+  // legado
   estoqueLoja?: string | number | null;
   estoqueCd?: string | number | null;
   estoqueTotal?: string | number | null;
 };
+
 
 type ConferenciaDTO = {
   idConferencia: number;
@@ -61,7 +68,7 @@ export default function DivergenciasPrintPage() {
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   async function apiGet<T>(path: string): Promise<T> {
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

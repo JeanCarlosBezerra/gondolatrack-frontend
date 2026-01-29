@@ -1,5 +1,6 @@
 // === INÍCIO ARQUIVO AJUSTADO: entities/ProductPosition.ts ===
 import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/apiFetch";
 
 // Modelo usado NA TELA (mantendo os nomes antigos para não quebrar o código)
 export type ProductPosition = {
@@ -51,7 +52,7 @@ export class ProductPositionEntity {
       return [];
     }
 
-    const res = await fetch(
+    const res = await apiFetch(
       `${API_BASE()}/posicoes-gondola?idGondola=${idGondola}`,
       { cache: "no-store" },
     );
@@ -72,7 +73,7 @@ export class ProductPositionEntity {
     estoqueMaximo?: number | null;
     estoqueAtual?: number | null;
   }): Promise<ProductPosition> {
-    const res = await fetch(`${API_BASE()}/posicoes-gondola`, {
+    const res = await apiFetch(`${API_BASE()}/posicoes-gondola`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -97,7 +98,7 @@ export class ProductPositionEntity {
 
   // Remove uma posição
   static async delete(id: number): Promise<void> {
-    const res = await fetch(`${API_BASE()}/posicoes-gondola/${id}`, {
+    const res = await apiFetch(`${API_BASE()}/posicoes-gondola/${id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });

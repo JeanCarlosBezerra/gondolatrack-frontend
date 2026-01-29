@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/apiFetch";
 
 // Se você já usa components/ui (button, card, input), pode trocar pelos seus.
 // Aqui vou manter HTML básico para não travar por dependência.
@@ -76,7 +77,7 @@ export default function ProdutosPage() {
         setLoadingLojas(true);
         setError(null);
 
-        const resp = await fetch(`${API_BASE()}/lojas`, { cache: "no-store" })
+        const resp = await apiFetch(`${API_BASE()}/lojas`)
         if (!resp.ok) throw new Error(`Falha ao carregar lojas (${resp.status})`);
         const data = await resp.json();
 
@@ -115,7 +116,7 @@ export default function ProdutosPage() {
         setSelectedAbastecimento(null);
         setItens([]);
 
-        const resp = await fetch(`${API_BASE()}/abastecimentos?idLoja=${idLoja}`, { cache: "no-store" });
+        const resp = await apiFetch(`${API_BASE()}/abastecimentos?idLoja=${idLoja}`);
         if (!resp.ok) throw new Error(`Falha ao listar abastecimentos (${resp.status})`);
         const data = await resp.json();
 
@@ -146,9 +147,7 @@ export default function ProdutosPage() {
         setLoadingItens(true);
         setError(null);
 
-        const resp = await fetch(`${API_BASE()}/abastecimentos/${selectedAbastecimento.idAbastecimento}/itens`, {
-          cache: "no-store",
-        });
+        const resp = await apiFetch(`${API_BASE()}/abastecimentos/${selectedAbastecimento.idAbastecimento}/itens`);
         if (!resp.ok) throw new Error(`Falha ao carregar itens (${resp.status})`);
         const data = await resp.json();
 
@@ -166,7 +165,7 @@ export default function ProdutosPage() {
   setLoadingLista(true);
   setError(null);
   try {
-    const r = await fetch(`${API_BASE()}/abastecimentos?idLoja=${lojaId}`);
+    const r = await apiFetch(`${API_BASE()}/abastecimentos?idLoja=${lojaId}`);
     if (!r.ok) throw new Error(await r.text());
     const data = await r.json();
     setAbastecimentos(data ?? []);
@@ -186,7 +185,7 @@ async function carregarItens(idAbastecimento: string) {
   setLoadingItens(true);
   setError(null);
   try {
-    const r = await fetch(`${API_BASE()}/abastecimentos/${idAbastecimento}/itens`);
+    const r = await apiFetch(`${API_BASE()}/abastecimentos/${idAbastecimento}/itens`);
     if (!r.ok) throw new Error(await r.text());
     const data = await r.json();
     setItens(data ?? []);
@@ -205,7 +204,7 @@ async function carregarItens(idAbastecimento: string) {
       setLoadingGerar(true);
       setError(null);
 
-      const resp = await fetch(`${API_BASE()}/abastecimentos/gerar`, {
+      const resp = await apiFetch(`${API_BASE()}/abastecimentos/gerar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -248,7 +247,7 @@ async function carregarItens(idAbastecimento: string) {
     })),
   };
 
-  const r1 = await fetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/itens`, {
+  const r1 = await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/itens`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -260,7 +259,7 @@ async function carregarItens(idAbastecimento: string) {
     return;
   }
 
-  const r2 = await fetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/confirmar`, {
+  const r2 = await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/confirmar`, {
     method: "POST",
   });
 

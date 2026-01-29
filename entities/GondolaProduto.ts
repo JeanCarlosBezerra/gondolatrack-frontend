@@ -37,8 +37,25 @@ export class GondolaProdutoEntity {
     
   static async listByGondola(idGondola: number): Promise<GondolaProduto[]> {
     if (!idGondola) throw new Error("Endpoint exige idGondola.");
-    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, { cache: "no-store" });
-    if (!res.ok) throw new Error("Erro ao carregar produtos da gôndola");
+    const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, {
+      cache: "no-store",
+      credentials: "include", // ✅ ESSENCIAL
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(async () => ({ message: await res.text() }));
+        
+      // 401 = não autenticado
+      if (res.status === 401) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+    
+      // 403 = bloqueio (feature flag / tenant / permissão)
+      if (res.status === 403) {
+        throw new Error(body?.message ?? "Acesso negado para este módulo.");
+      }
+    
+      throw new Error(body?.message ?? `Erro ao carregar produtos da gôndola (${res.status}).`);
+    }
     const data = (await res.json()) as RawGondolaProduto[];
     return data.map(mapRaw);
   }
@@ -49,6 +66,7 @@ export class GondolaProdutoEntity {
   ): Promise<GondolaProduto> {
     const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, {
       method: "POST",
+      credentials: "include", // ✅
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
@@ -63,10 +81,11 @@ export class GondolaProdutoEntity {
   }
       // === ALTERAÇÃO: delete ===
     static async delete(idGondola: number, idGondolaProduto: number): Promise<void> {
-      const res = await fetch(
-        `${API_BASE()}/gondolas/${idGondola}/produtos/${idGondolaProduto}`,
-        { method: "DELETE", headers: { "Content-Type": "application/json" } }
-      );
+      const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos/${idGondolaProduto}`, {
+        method: "DELETE",
+        credentials: "include", // ✅
+        headers: { "Content-Type": "application/json" },
+      });
 
       if (!res.ok) {
         const text = await res.text();

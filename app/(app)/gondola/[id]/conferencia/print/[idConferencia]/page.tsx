@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Conferencia = {
   idConferencia: number;
@@ -42,7 +43,7 @@ async function carregar() {
     }
 
     // [ALTERADO] rota correta (com idGondola)
-    const resp = await fetch(
+    const resp = await apiFetch(
       `${API_BASE()}/gondolas/${idGondola}/conferencia/${idConferencia}`,
       { credentials: "include", cache: "no-store" }
     );
