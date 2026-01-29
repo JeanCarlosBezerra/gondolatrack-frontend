@@ -230,8 +230,11 @@ export default function ProdutosPage() {
                     </td>
                   </tr>
                 ) : (
-                  data.items.map((r) => (
-                    <tr key={`${r.IDPRODUTO}`} className="border-t border-slate-100">
+                  data.items.map((r, idx) => (
+                      <tr
+                        key={`${r.IDPRODUTO}-${r.EAN ?? "SEM_EAN"}-${idx}`}
+                        className="border-t border-slate-100"
+                      >
                       <td className="px-4 py-3">{r.IDPRODUTO}</td>
                       <td className="px-4 py-3">{r.EAN}</td>
                       <td className="px-4 py-3">{r.DESCRICAO}</td>

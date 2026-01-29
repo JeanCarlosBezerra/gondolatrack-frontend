@@ -77,11 +77,8 @@ export default function ProdutosPage() {
         setLoadingLojas(true);
         setError(null);
 
-        const resp = await apiFetch(`${API_BASE()}/lojas`)
-        if (!resp.ok) throw new Error(`Falha ao carregar lojas (${resp.status})`);
-        const data = await resp.json();
-
-        // seu backend pode retornar { ... } ou array direto; trate os dois
+        const data = await apiFetch<any>(`${API_BASE()}/lojas`, { cache: "no-store" });
+              
         const list: Loja[] = Array.isArray(data)
           ? data.map((r: any) => ({
               idLoja: Number(r.idLoja ?? r.id_loja),

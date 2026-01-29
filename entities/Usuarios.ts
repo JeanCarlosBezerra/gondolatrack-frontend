@@ -5,9 +5,8 @@ export type Usuario = { idUsuario: number; nomeUsuario: string };
 
 export class UsuarioEntity {
   static async list(): Promise<Usuario[]> {
-    const res = await apiFetch(`${API_BASE()}/usuarios`);
-    if (!res.ok) throw new Error("Erro ao carregar usuários");
-    return (await res.json()) as Usuario[];
+    const data = await apiFetch<Usuario[]>(`${API_BASE()}/usuarios`, { cache: "no-store" });
+    return data;
   }
 }
 // === FIM ARQUIVO ===
