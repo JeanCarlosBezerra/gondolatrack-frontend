@@ -48,20 +48,21 @@ async function carregar() {
       { credentials: "include", cache: "no-store" }
     );
 
-    const json = await resp.json().catch(() => null);
-
-    if (!resp.ok) {
-      // [ALTERADO] se 404, mostra mensagem amigável
-      throw new Error(json?.message ?? "Conferência não encontrada.");
-    }
-
-    if (!json) {
-      throw new Error("Resposta inválida do servidor.");
-    }
+        // [ALTERADO] rota correta (com idGondola)
+    const json = await apiFetch<Conferencia>(
+      `${API_BASE()}/gondolas/${idGondola}/conferencia/${idConferencia}`,
+      { credentials: "include", cache: "no-store" }
+    );
 
     setData(json);
+
   } catch (e: any) {
-    setErro(e?.message ?? "Não foi possível carregar a conferência.");
+    const msg =
+      (typeof e?.message === "string" && e.message) ||
+      (Array.isArray(e?.message) && e.message.join(" | ")) ||
+      e?.error ||
+      "Não foi possível carregar a conferência.";
+    setErro(msg);
   } finally {
     setLoading(false); // ✅ sempre desliga
   }

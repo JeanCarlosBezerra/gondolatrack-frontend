@@ -50,7 +50,7 @@ function fmt3(v: string | number): string {
   return n.toFixed(3);
 }
 
-export default function ProdutosPage() {
+export default function AbastecimentoPage() {
   // filtros
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [idLoja, setIdLoja] = useState<number | null>(null);
@@ -102,176 +102,147 @@ export default function ProdutosPage() {
   // ======= 2) carregar lista de abastecimentos ao trocar loja =======
   useEffect(() => {
     if (!idLoja) return;
+
     setSelectedAbastecimento(null);
     setItens([]);
     carregarAbastecimentos(idLoja);
-
-    (async () => {
-      try {
-        setLoadingLista(true);
-        setError(null);
-        setSelectedAbastecimento(null);
-        setItens([]);
-
-        const resp = await apiFetch(`${API_BASE()}/abastecimentos?idLoja=${idLoja}`);
-        if (!resp.ok) throw new Error(`Falha ao listar abastecimentos (${resp.status})`);
-        const data = await resp.json();
-
-        const list: Abastecimento[] = Array.isArray(data)
-          ? data
-          : [];
-
-        setAbastecimentos(list);
-
-        // opcional: seleciona o mais recente automaticamente
-        if (list.length) {
-          setSelectedAbastecimento(list[0]);
-        }
-      } catch (e: any) {
-        setError(e?.message ?? "Erro ao listar abastecimentos");
-      } finally {
-        setLoadingLista(false);
-      }
-    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idLoja]);
 
   // ======= 3) ao selecionar um abastecimento, carregar itens =======
   useEffect(() => {
     if (!selectedAbastecimento?.idAbastecimento) return;
+    carregarItens(selectedAbastecimento.idAbastecimento);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAbastecimento?.idAbastecimento]);
 
-    (async () => {
-      try {
-        setLoadingItens(true);
-        setError(null);
-
-        const resp = await apiFetch(`${API_BASE()}/abastecimentos/${selectedAbastecimento.idAbastecimento}/itens`);
-        if (!resp.ok) throw new Error(`Falha ao carregar itens (${resp.status})`);
-        const data = await resp.json();
-
-        const list: AbastecimentoItem[] = Array.isArray(data) ? data : [];
-        setItens(list);
-      } catch (e: any) {
-        setError(e?.message ?? "Erro ao carregar itens");
-      } finally {
-        setLoadingItens(false);
-      }
-    })();
-  }, [selectedAbastecimento]);
-
-  async function carregarAbastecimentos(lojaId: number) {
+async function carregarAbastecimentos(lojaId: number) {
   setLoadingLista(true);
   setError(null);
-  try {
-    const r = await apiFetch(`${API_BASE()}/abastecimentos?idLoja=${lojaId}`);
-    if (!r.ok) throw new Error(await r.text());
-    const data = await r.json();
-    setAbastecimentos(data ?? []);
 
-    // opcional: se não tem selecionado, seleciona o primeiro
-    if ((data?.length ?? 0) > 0 && !selectedAbastecimento) {
-      setSelectedAbastecimento(data[0]);
+  try {
+    const data = await apiFetch<any[]>(`${API_BASE()}/abastecimentos?idLoja=${lojaId}`, {
+      cache: "no-store",
+    });
+
+    const list: Abastecimento[] = Array.isArray(data) ? data : [];
+    setAbastecimentos(list);
+
+    // seleciona o primeiro se não tiver selecionado
+    if (list.length > 0) {
+      setSelectedAbastecimento((prev) => prev ?? list[0]);
     }
   } catch (e: any) {
-    setError(e?.message ?? String(e));
+    const msg =
+      (typeof e?.message === "string" && e.message) ||
+      (Array.isArray(e?.message) && e.message.join(" | ")) ||
+      e?.error ||
+      "Erro ao listar abastecimentos";
+    setError(msg);
+    setAbastecimentos([]);
   } finally {
     setLoadingLista(false);
   }
 }
 
+
 async function carregarItens(idAbastecimento: string) {
   setLoadingItens(true);
   setError(null);
+
   try {
-    const r = await apiFetch(`${API_BASE()}/abastecimentos/${idAbastecimento}/itens`);
-    if (!r.ok) throw new Error(await r.text());
-    const data = await r.json();
-    setItens(data ?? []);
+    const data = await apiFetch<any[]>(
+      `${API_BASE()}/abastecimentos/${idAbastecimento}/itens`,
+      { cache: "no-store" }
+    );
+
+    const list: AbastecimentoItem[] = Array.isArray(data) ? data : [];
+    setItens(list);
   } catch (e: any) {
-    setError(e?.message ?? String(e));
+    const msg =
+      (typeof e?.message === "string" && e.message) ||
+      (Array.isArray(e?.message) && e.message.join(" | ")) ||
+      e?.error ||
+      "Erro ao carregar itens";
+    setError(msg);
+    setItens([]);
   } finally {
     setLoadingItens(false);
   }
 }
 
+
   // ======= 4) gerar abastecimento =======
-  async function onGerar() {
-    if (!idLoja) return;
+// ================================
+// [ALTERADO] gerar abastecimento usando apiFetch (json pronto)
+// ================================
+async function onGerar() {
+  if (!idLoja) return;
 
-    try {
-      setLoadingGerar(true);
-      setError(null);
+  try {
+    setLoadingGerar(true);
+    setError(null);
 
-      const resp = await apiFetch(`${API_BASE()}/abastecimentos/gerar`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idLoja,
-          diasVenda,
-          coberturaDias,
-        }),
-      });
+    const data = await apiFetch<any>(`${API_BASE()}/abastecimentos/gerar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idLoja, diasVenda, coberturaDias }),
+    });
 
-      if (!resp.ok) {
-        const payload = await resp.json().catch(() => null);
-        const msg = payload?.message ? String(payload.message) : `Falha ao gerar (${resp.status})`;
-        throw new Error(msg);
-      }
+    const ab: Abastecimento | null = data?.abastecimento ?? null;
+    const its: AbastecimentoItem[] = Array.isArray(data?.itens) ? data.itens : [];
 
-      const data = await resp.json();
-      const ab: Abastecimento | null = data?.abastecimento ?? null;
-      const its: AbastecimentoItem[] = Array.isArray(data?.itens) ? data.itens : [];
-
-      // atualiza lista e seleciona o novo
-      if (ab) {
-        setAbastecimentos((prev) => [ab, ...prev]);
-        setSelectedAbastecimento(ab);
-      }
-      setItens(its);
-    } catch (e: any) {
-      setError(e?.message ?? "Erro ao gerar abastecimento");
-    } finally {
-      setLoadingGerar(false);
+    if (ab) {
+      setAbastecimentos((prev) => [ab, ...prev]);
+      setSelectedAbastecimento(ab);
     }
+    setItens(its);
+  } catch (e: any) {
+    setError(e?.message ?? "Erro ao gerar abastecimento");
+  } finally {
+    setLoadingGerar(false);
   }
+}
 
-  async function handleConfirmar() {
+
+// ================================
+// [ALTERADO] confirmar: apiFetch já lança erro se != 2xx
+// ================================
+async function handleConfirmar() {
   if (!selecionadoAbastecimentoId) return;
 
-  const payload = {
-    itens: itens.map((it) => ({
-      idAbastecimentoItem: it.idAbastecimentoItem,
-      qtdSelecionada: it.qtdSelecionada ?? "0.000",
-    })),
-  };
+  try {
+    setError(null);
 
-  const r1 = await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/itens`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+    const payload = {
+      itens: itens.map((it) => ({
+        idAbastecimentoItem: it.idAbastecimentoItem,
+        qtdSelecionada: it.qtdSelecionada ?? "0.000",
+      })),
+    };
 
-  if (!r1.ok) {
-    const t = await r1.text();
-    alert(`Erro ao salvar itens: ${t}`);
-    return;
+    // salva itens
+    await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/itens`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    // confirma
+    await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/confirmar`, {
+      method: "POST",
+    });
+
+    // recarrega
+    await carregarAbastecimentos(Number(idLoja));
+    await carregarItens(selecionadoAbastecimentoId);
+
+    alert("Abastecimento confirmado com sucesso.");
+  } catch (e: any) {
+    alert(`Erro ao confirmar: ${e?.message ?? String(e)}`);
   }
-
-  const r2 = await apiFetch(`${API_BASE()}/abastecimentos/${selecionadoAbastecimentoId}/confirmar`, {
-    method: "POST",
-  });
-
-  if (!r2.ok) {
-    const t = await r2.text();
-    alert(`Erro ao confirmar: ${t}`);
-    return;
-  }
-
-  // === ALTERADO: recarrega
-  await carregarAbastecimentos(Number(idLoja));
-  await carregarItens(selecionadoAbastecimentoId);
-
-  alert("Abastecimento confirmado com sucesso.");
 }
+
 
 function handleExportarXlsx() {
   if (!selecionadoAbastecimentoId) return;

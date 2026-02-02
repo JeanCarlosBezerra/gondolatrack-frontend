@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
+import { API_BASE } from "@/lib/api";
 
 type ConfItem = {
   idItem?: number;
@@ -76,20 +77,14 @@ export default function ConferenciaDetalhePage() {
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   async function apiGet<T>(path: string): Promise<T> {
-    const res = await apiFetch(path, {
+    // apiFetch já retorna o JSON parseado e já lança erro se status != 2xx
+    return await apiFetch<T>(path, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       cache: "no-store",
     });
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      throw new Error(`HTTP ${res.status} - ${txt || res.statusText}`);
-    }
-    return (await res.json()) as T;
   }
 
   async function carregar() {
@@ -116,7 +111,12 @@ export default function ConferenciaDetalhePage() {
 
     setConf({ ...(data as any), itens });
     } catch (e: any) {
-      setErr(e?.message || "Erro ao carregar conferência.");
+      const msg =
+        (typeof e?.message === "string" && e.message) ||
+        (Array.isArray(e?.message) && e.message.join(" | ")) ||
+        e?.error ||
+        "Erro ao carregar conferência.";
+      setErr(msg);
     } finally {
       setLoading(false);
     }
