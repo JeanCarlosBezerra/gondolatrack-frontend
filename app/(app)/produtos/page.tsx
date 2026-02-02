@@ -62,6 +62,7 @@ export default function ProdutosPage() {
     if (!canSearch) return;
 
     const p = resetPage ? 1 : page;
+    setData((prev) => ({ ...prev, items: [] }));
     setLoading(true);
 
     try {
@@ -165,7 +166,11 @@ export default function ProdutosPage() {
                   ? "bg-blue-600 text-white"
                   : "bg-slate-100 text-slate-700"
               }`}
-              onClick={() => setTab("sem-gondola")}
+              onClick={() => {
+                  setData({ page: 1, limit: 50, items: [], hasNext: false });
+                  setPage(1);
+                  setTab("sem-gondola");
+                }}
             >
               Sem gôndola (com estoque)
             </button>
