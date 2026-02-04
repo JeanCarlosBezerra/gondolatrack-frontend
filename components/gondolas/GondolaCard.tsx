@@ -156,6 +156,10 @@ export default function GondolaCard({
             <span className="text-slate-600">{responsavelNome}</span>
           </div>
 
+          <Badge className="bg-blue-100 text-blue-800">
+            {gondola.papelNaLoja ?? '—'}
+          </Badge>
+
           <div className="flex gap-2 pt-4 border-t border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button
               variant="outline"

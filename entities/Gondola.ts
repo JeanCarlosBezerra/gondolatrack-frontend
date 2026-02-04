@@ -4,6 +4,8 @@ import { API_BASE } from "@/lib/api";
 export type Gondola = {
   idGondola: number;
   idLoja: number;
+  idLojaLocalEstoque: number;
+  papelNaLoja?: 'VENDA' | 'DEPOSITO' | 'CD';
   nome: string;
   corredorSecao: string | null;
   marca: string | null;
@@ -15,6 +17,7 @@ export type Gondola = {
 
 export type GondolaFormData = {
   idLoja: number;
+  idLojaLocalEstoque: number;
   nome: string;
   corredorSecao: string | null;
   marca: string | null;
@@ -30,6 +33,13 @@ function mapRaw(raw: any): Gondola {
     // === ALTERADO: também aceita "id" por segurança ===
     idGondola: r.idGondola ?? r.id_gondola ?? r.id,
     idLoja: r.idLoja ?? r.id_loja,
+    idLojaLocalEstoque:
+      r.idLojaLocalEstoque ?? r.id_loja_local_estoque,
+      
+    papelNaLoja:
+      r.localEstoque?.papelNaLoja ??
+      r.papel_na_loja ??
+      null,
     nome: r.nome,
     corredorSecao: r.corredorSecao ?? r.secao_corredor ?? null,
     marca: r.marca ?? null,
@@ -37,6 +47,7 @@ function mapRaw(raw: any): Gondola {
     idResponsavel: r.idResponsavel ?? r.id_vendedor_responsavel ?? null,
     criadoEm: r.criadoEm ?? r.criado_em,
     atualizadoEm: r.atualizadoEm ?? r.atualizado_em ?? null,
+    
   };
 }
 

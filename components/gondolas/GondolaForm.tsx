@@ -1,7 +1,7 @@
 // components/gondolas/GondolaForm.tsx
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { XCircle, Save } from "lucide-react";
 import type { Store } from "@/entities/Store";
 import type { Gondola, GondolaFormData } from "@/entities/Gondola";
 import type { Usuario } from "@/entities/Usuarios";
+import { LojaLocalEstoque, LojaLocalEstoqueEntity } from "@/entities/LojaLocalEstoque";
 
 interface GondolaFormProps {
   gondola?: Gondola | null;
@@ -45,6 +46,30 @@ export default function GondolaForm({
 
   const storeOptions = useMemo(() => stores ?? [], [stores]);
   const userOptions = useMemo(() => usuarios ?? [], [usuarios]);
+  const [locaisEstoque, setLocaisEstoque] = useState<LojaLocalEstoque[]>([]);
+  const [idLojaLocalEstoque, setIdLojaLocalEstoque] = useState<number | null>(
+    gondola?.idLojaLocalEstoque ?? null
+  );
+
+  useEffect(() => {
+    if (!idLoja) {
+      setLocaisEstoque([]);
+      setIdLojaLocalEstoque(null);
+      return;
+    }
+
+    (async () => {
+      const list = await LojaLocalEstoqueEntity.listByLoja(idLoja);
+      setLocaisEstoque(list);
+
+      if (!idLojaLocalEstoque && list.length) {
+        const venda = list.find(l => l.papelNaLoja === 'VENDA');
+        setIdLojaLocalEstoque(
+          (venda ?? list[0]).idLojaLocalEstoque
+        );
+      }
+    })();
+  }, [idLoja]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,8 +87,15 @@ export default function GondolaForm({
       return;
     }
 
+    if (!idLojaLocalEstoque) {
+      alert('Selecione o local de estoque.');
+      return;
+    }
+
+
     const payload: GondolaFormData = {
       idLoja,
+      idLojaLocalEstoque,
       nome: nome.trim(),
       corredorSecao: corredorSecao.trim() ? corredorSecao.trim() : null,
       marca: marca.trim() ? marca.trim() : null,
@@ -73,6 +105,8 @@ export default function GondolaForm({
 
     await onSubmit(payload);
   };
+
+  
 
   return (
     <Card className="border-0 shadow-lg shadow-slate-200/60 bg-white">
@@ -106,6 +140,23 @@ export default function GondolaForm({
               {storeOptions.map((s) => (
                 <option key={s.id} value={String(s.id)}>
                   {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-slate-700">Local de Estoque</Label>
+            <select
+              className="w-full rounded-md border border-slate-200 bg-white py-2 px-3 text-sm"
+              value={idLojaLocalEstoque ?? ''}
+              onChange={(e) => setIdLojaLocalEstoque(Number(e.target.value))}
+              disabled={!idLoja}
+            >
+              <option value="">Selecione</option>
+              {locaisEstoque.map((l) => (
+                <option key={l.idLojaLocalEstoque} value={l.idLojaLocalEstoque}>
+                  {l.papelNaLoja} (Local #{l.idLocalEstoque})
                 </option>
               ))}
             </select>

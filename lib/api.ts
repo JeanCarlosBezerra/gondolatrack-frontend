@@ -3,13 +3,12 @@ export function getApiBase(): string {
   const base = process.env.NEXT_PUBLIC_API_BASE;
   if (base && base.trim()) return base.replace(/\/$/, "");
 
-  const url = process.env.NEXT_PUBLIC_API_URL;
-  if (url && url.trim()) return `${url.replace(/\/$/, "")}/api`;
-
+  // ✅ No browser (produção), use mesma origem (HTTPS) via /api
   if (typeof window !== "undefined") {
-    return `http://${window.location.hostname}:3001/api`;
+    return "/api";
   }
 
+  // ✅ No server-side (dev), fallback local
   return "http://localhost:3001/api";
 }
 
