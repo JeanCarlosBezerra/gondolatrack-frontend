@@ -175,7 +175,7 @@ export default function GondolaForm({
               <option value="">Selecione</option>
               {userOptions.map((u) => (
                 <option key={u.idUsuario} value={String(u.idUsuario)}>
-                  {u.nomeUsuario}
+                  {u.nomeUsuario || `#${u.idUsuario}`}
                 </option>
               ))}
             </select>

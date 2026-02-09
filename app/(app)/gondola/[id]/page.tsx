@@ -87,6 +87,7 @@ export default function GondolaDetailPage() {
       setGondola(g);
       setStores(st);
       setUsuarios(us);
+      console.log("USUARIOS =>", us);
     } catch (e: any) {
       setError(e?.message ?? "Erro ao carregar");
     } finally {
@@ -158,35 +159,26 @@ export default function GondolaDetailPage() {
 
   // chama backend para atualizar estoque dos produtos da gôndola (evita divergência na impressão)
 // chama backend para atualizar estoque dos produtos da gôndola (evita divergência na impressão)
+// ======= impressão helpers =======
+
+// === ALTERAÇÃO: apiFetch retorna "data", não Response ===
 async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
   if (!idGondola) return items;
 
-  // --- ALTERAÇÃO: usar fetch direto (Response real) ---
-  const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
+  // 1) dispara o refresh (se falhar, apiFetch lança erro)
+  await apiFetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     cache: "no-store",
   });
 
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Falha ao atualizar estoque antes de imprimir. ${txt}`);
-  }
+  // 2) busca a lista normal (apiFetch devolve JSON)
+  const data = await apiFetch<any[]>(
+    `${API_BASE()}/gondolas/${idGondola}/produtos`,
+    { cache: "no-store" }
+  );
 
-  const res2 = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, {
-    method: "GET",
-    credentials: "include",
-    cache: "no-store",
-  });
-
-  if (!res2.ok) {
-    const txt = await res2.text().catch(() => "");
-    throw new Error(`Falha ao recarregar produtos após refresh. ${txt}`);
-  }
-
-  const data = (await res2.json()) as any[];
-
+  // mapeia no mesmo formato do seu GondolaProduto
   return (Array.isArray(data) ? data : []).map((raw) => ({
     idGondolaProduto: raw.idGondolaProduto ?? raw.id_gondola_produto ?? raw.id,
     idGondola: raw.idGondola ?? raw.id_gondola,
@@ -200,6 +192,7 @@ async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
     atualizadoEm: raw.atualizadoEm ?? raw.atualizado_em ?? "",
   }));
 }
+
 
 
   async function printConferencia() {
@@ -228,39 +221,36 @@ async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
     }
   }
 
-  async function printReposicao() {
-    if (!idGondola) return;
+// === ALTERAÇÃO: printReposicao sem "res.ok" pois apiFetch retorna JSON ===
+async function printReposicao() {
+  if (!idGondola) return;
 
-    try {
-      setPrinting(true);
-      setError(null);
+  try {
+    setPrinting(true);
+    setError(null);
 
-      // importante: atualizar estoque antes também (para consistência)
-      const updatedItems = await refreshEstoqueParaImpressao();
-      setItems(updatedItems);
+    const updatedItems = await refreshEstoqueParaImpressao();
+    setItems(updatedItems);
 
-      const res = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/reposicao`);
+    const data = await apiFetch<ReposicaoItem[]>(
+      `${API_BASE()}/gondolas/${idGondola}/reposicao`,
+      { cache: "no-store" }
+    );
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`Falha ao carregar reposição. ${txt}`);
-      }
+    setReposicaoItems(Array.isArray(data) ? data : []);
+    setPrintAt(new Date().toLocaleString());
+    setPrintMode("reposicao");
 
-      const data = (await res.json()) as ReposicaoItem[];
-      setReposicaoItems(data);
-      setPrintAt(new Date().toLocaleString());
-      setPrintMode("reposicao");
-
-      setTimeout(() => window.print(), 200);
-    } catch (e: any) {
-      setError(e?.message ?? "Erro ao imprimir reposição");
-    } finally {
-      setTimeout(() => {
-        setPrinting(false);
-        setPrintMode(null);
-      }, 400);
-    }
+    setTimeout(() => window.print(), 200);
+  } catch (e: any) {
+    setError(e?.message ?? "Erro ao imprimir reposição");
+  } finally {
+    setTimeout(() => {
+      setPrinting(false);
+      setPrintMode(null);
+    }, 400);
   }
+}
 
   return (
     <div className="p-8 space-y-6 print:p-0 print:space-y-0">
