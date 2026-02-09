@@ -1,14 +1,18 @@
-// lib/api.ts
 export function getApiBase(): string {
   const base = process.env.NEXT_PUBLIC_API_BASE;
   if (base && base.trim()) return base.replace(/\/$/, "");
 
-  // ✅ No browser (produção), use mesma origem (HTTPS) via /api
+  // ===== ALTERAÇÃO: em DEV, browser também aponta pro backend =====
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:3001/api";
+  }
+  // ===== FIM ALTERAÇÃO =====
+
+  // produção: mesma origem via /api
   if (typeof window !== "undefined") {
     return "/api";
   }
 
-  // ✅ No server-side (dev), fallback local
   return "http://localhost:3001/api";
 }
 

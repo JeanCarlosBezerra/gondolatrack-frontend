@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FeatureFlagsEntity } from "@/entities/FeatureFlags";
+import { AuthEntity } from "@/entities/Auth";
 
 type SidebarLinkProps = { href: string; label: string };
 
@@ -25,22 +26,43 @@ function SidebarLink({ href, label }: SidebarLinkProps) {
   );
 }
 
+function parseRoles(csv?: string) {
+  return new Set(
+    String(csv ?? "")
+      .split(",")
+      .map((s) => s.trim().toUpperCase())
+      .filter(Boolean)
+  );
+}
+
 export function Sidebar() {
   const [flags, setFlags] = useState<Record<string, boolean>>({});
-  const [loadingFlags, setLoadingFlags] = useState(true);
+  const [rolesSet, setRolesSet] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       try {
-        const me = await FeatureFlagsEntity.me();
-        if (mounted) setFlags(me.flags ?? {});
-      } catch {
-        // fallback: se falhar, mostra tudo (evita travar UI)
-        if (mounted) setFlags({});
+        // ✅ carrega os 2 em paralelo
+        const [ff, me] = await Promise.all([
+          FeatureFlagsEntity.me(),
+          AuthEntity.me(),
+        ]);
+
+        if (!mounted) return;
+
+        setFlags(ff.flags ?? {});
+        setRolesSet(parseRoles(me?.user?.roles));
+      } catch (e) {
+        // fallback: se falhar, não trava UI
+        if (mounted) {
+          setFlags({});
+          setRolesSet(new Set());
+        }
       } finally {
-        if (mounted) setLoadingFlags(false);
+        if (mounted) setLoading(false);
       }
     })();
 
@@ -49,17 +71,31 @@ export function Sidebar() {
     };
   }, []);
 
-  // se loadingFlags=true, você pode:
-  // A) esconder itens até carregar (como você já faz)
-  // B) OU mostrar tudo enquanto carrega
-  // Vou manter o seu padrão: só mostra depois que carregou.
-
+  // Feature flags (empresa)
   const modLojas = flags["MOD_LOJAS"] ?? true;
   const modGondolas = flags["MOD_GONDOLAS"] ?? true;
   const modCatalogoProdutos = flags["MOD_CATALOGO_PRODUTOS"] ?? true;
   const modAbastecimento = flags["MOD_ABASTECIMENTO"] ?? true;
   const modConferencias = flags["MOD_CONFERENCIAS"] ?? true;
   const modRelatorios = flags["MOD_RELATORIOS"] ?? true;
+  const modConfiguracoes = flags["MOD_CONFIGURACOES"] ?? true;
+
+  // Roles (usuário)
+  const isAdmin = rolesSet.has("ADMIN");
+
+  // ✅ Regra: Configurações só aparece se:
+  // - feature flag da empresa está on
+  // - E o usuário é ADMIN ou tem alguma permissão de config
+  const canSeeConfiguracoes = useMemo(() => {
+    if (!modConfiguracoes) return false;
+    if (isAdmin) return true;
+
+    // se você quiser, pode deixar mais “estrito” ainda:
+    return (
+      rolesSet.has("CFG_LOCAIS_ESTOQUE_VIEW") ||
+      rolesSet.has("CFG_USERS_VIEW")
+    );
+  }, [modConfiguracoes, isAdmin, rolesSet]);
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 hidden md:flex flex-col">
@@ -76,12 +112,16 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         <SidebarLink href="/" label="Dashboard" />
 
-        {!loadingFlags && modLojas && <SidebarLink href="/lojas" label="Lojas" />}
-        {!loadingFlags && modGondolas && <SidebarLink href="/gondola" label="Gôndolas" />}
-        {!loadingFlags && modCatalogoProdutos && <SidebarLink href="/produtos" label="Produtos" />}
-        {!loadingFlags && modAbastecimento && <SidebarLink href="/abastecimento" label="Abastecimento" />}
-        {!loadingFlags && modConferencias && <SidebarLink href="/conferencias" label="Conferências" />}
-        {!loadingFlags && modRelatorios && <SidebarLink href="/relatorios" label="Relatórios" />}
+        {!loading && modLojas && <SidebarLink href="/lojas" label="Lojas" />}
+        {!loading && modGondolas && <SidebarLink href="/gondola" label="Gôndolas" />}
+        {!loading && modCatalogoProdutos && <SidebarLink href="/produtos" label="Produtos" />}
+        {!loading && modAbastecimento && <SidebarLink href="/abastecimento" label="Abastecimento" />}
+        {!loading && modConferencias && <SidebarLink href="/conferencias" label="Conferências" />}
+        {!loading && modRelatorios && <SidebarLink href="/relatorios" label="Relatórios" />}
+
+        {!loading && canSeeConfiguracoes && (
+          <SidebarLink href="/configuracoes" label="Configurações" />
+        )}
       </nav>
     </aside>
   );
