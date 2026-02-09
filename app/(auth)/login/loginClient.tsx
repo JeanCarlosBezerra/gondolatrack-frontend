@@ -43,7 +43,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
-
+  console.log("API_BASE() =", API_BASE());
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
       <Card className="w-full max-w-md shadow-lg">
