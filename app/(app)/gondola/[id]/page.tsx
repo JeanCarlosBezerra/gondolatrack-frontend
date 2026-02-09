@@ -61,6 +61,7 @@ export default function GondolaDetailPage() {
   const [printMode, setPrintMode] = useState<PrintMode>(null);
   const [reposicaoItems, setReposicaoItems] = useState<ReposicaoItem[]>([]);
   const [printing, setPrinting] = useState(false);
+  const [printAt, setPrintAt] = useState<string>(""); // timestamp fixo para evitar hydration
 
   const lojaNome = stores.find((s) => s.id === gondola?.idLoja)?.name ?? "-";
 
@@ -156,13 +157,15 @@ export default function GondolaDetailPage() {
   }
 
   // chama backend para atualizar estoque dos produtos da gôndola (evita divergência na impressão)
-  async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
+// chama backend para atualizar estoque dos produtos da gôndola (evita divergência na impressão)
+async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
   if (!idGondola) return items;
 
-  // 1) dispara o refresh (não confia no retorno)
-  const res = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
+  // --- ALTERAÇÃO: usar fetch direto (Response real) ---
+  const res = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos/refresh-estoque`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -171,8 +174,12 @@ export default function GondolaDetailPage() {
     throw new Error(`Falha ao atualizar estoque antes de imprimir. ${txt}`);
   }
 
-  // 2) agora busca a lista normal (essa SEMPRE é array)
-  const res2 = await apiFetch(`${API_BASE()}/gondolas/${idGondola}/produtos`);
+  const res2 = await fetch(`${API_BASE()}/gondolas/${idGondola}/produtos`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
   if (!res2.ok) {
     const txt = await res2.text().catch(() => "");
     throw new Error(`Falha ao recarregar produtos após refresh. ${txt}`);
@@ -180,7 +187,6 @@ export default function GondolaDetailPage() {
 
   const data = (await res2.json()) as any[];
 
-  // mapeia no mesmo formato do seu GondolaProduto
   return (Array.isArray(data) ? data : []).map((raw) => ({
     idGondolaProduto: raw.idGondolaProduto ?? raw.id_gondola_produto ?? raw.id,
     idGondola: raw.idGondola ?? raw.id_gondola,
@@ -195,6 +201,7 @@ export default function GondolaDetailPage() {
   }));
 }
 
+
   async function printConferencia() {
     if (!idGondola) return;
 
@@ -205,6 +212,7 @@ export default function GondolaDetailPage() {
       // atualiza estoque antes
       const updatedItems = await refreshEstoqueParaImpressao();
       setItems(updatedItems);  
+      setPrintAt(new Date().toLocaleString());
       setPrintMode("conferencia");
 
       // pequeno delay para React renderizar antes de window.print()
@@ -240,7 +248,7 @@ export default function GondolaDetailPage() {
 
       const data = (await res.json()) as ReposicaoItem[];
       setReposicaoItems(data);
-
+      setPrintAt(new Date().toLocaleString());
       setPrintMode("reposicao");
 
       setTimeout(() => window.print(), 200);
@@ -334,7 +342,7 @@ export default function GondolaDetailPage() {
         <div className="border-b pb-2 mb-2">
           <h2 className="font-bold text-base">FITA DE CONFERÊNCIA – GÔNDOLA</h2>
           <p>Gôndola #{idGondola}</p>
-          <p>Data: {new Date().toLocaleString()}</p>
+          <p>Data: {printAt || "-"}</p>
         </div>
 
         <div className="mb-2">
@@ -382,7 +390,7 @@ export default function GondolaDetailPage() {
         <div className="border-b pb-2 mb-2">
           <h2 className="font-bold text-base">REPOSIÇÃO – GÔNDOLA (LOJA)</h2>
           <p>Gôndola #{idGondola}</p>
-          <p>Data: {new Date().toLocaleString()}</p>
+          <p>Data: {printAt || "-"}</p>
         </div>
 
         <div className="mb-2">
