@@ -179,6 +179,7 @@ async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
   );
 
   // mapeia no mesmo formato do seu GondolaProduto
+// mapeia no mesmo formato do seu GondolaProduto
   return (Array.isArray(data) ? data : []).map((raw) => ({
     idGondolaProduto: raw.idGondolaProduto ?? raw.id_gondola_produto ?? raw.id,
     idGondola: raw.idGondola ?? raw.id_gondola,
@@ -189,6 +190,7 @@ async function refreshEstoqueParaImpressao(): Promise<GondolaProduto[]> {
     minimo: Number(raw.minimo ?? 0),
     maximo: Number(raw.maximo ?? 0),
     estoqueAtual: Number(raw.estoqueAtual ?? raw.estoque_atual ?? 0),
+    estoqueSnapshot: Number(raw.estoqueSnapshot ?? raw.estoque_snapshot ?? 0), // 
     atualizadoEm: raw.atualizadoEm ?? raw.atualizado_em ?? "",
   }));
 }
@@ -297,7 +299,7 @@ async function printReposicao() {
         <CardContent>
           <form className="grid grid-cols-1 md:grid-cols-4 gap-3" onSubmit={handleAdd}>
             <Input
-              placeholder="EAN (código de barras)"
+              placeholder="EAN ou código interno"
               value={ean}
               onChange={(e) => setEan(e.target.value)}
             />
@@ -443,25 +445,29 @@ async function printReposicao() {
           {items.length > 0 && (
             <div className="overflow-auto">
               <table className="w-full text-sm">
-                <thead className="text-left text-slate-600">
+                <thead className="text-slate-600">
                   <tr className="border-b">
-                    <th className="py-2 pr-3">EAN</th>
-                    <th className="py-2 pr-3">Descrição</th>
-                    <th className="py-2 pr-3">Mín.</th>
-                    <th className="py-2 pr-3">Máx.</th>
-                    <th className="py-2 pr-3">Estoque atual</th>
-                    <th className="text-right">Ações</th>
+                    <th className="py-2 pr-3 text-left">Cód.</th>
+                    <th className="py-2 pr-3 text-left">EAN</th>
+                    <th className="py-2 pr-3 text-left">Descrição</th>
+                    <th className="py-2 pr-3 text-right">Mín.</th>
+                    <th className="py-2 pr-3 text-right">Máx.</th>
+                    <th className="py-2 pr-3 text-right">Est. cadastro</th>
+                    <th className="py-2 pr-3 text-right">Est. atual</th>
+                    <th className="py-2 text-right">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((it) => (
                     <tr key={it.idGondolaProduto} className="border-b last:border-b-0">
-                      <td className="py-2 pr-3 font-mono">{it.ean}</td>
+                      <td className="py-2 pr-3 font-mono">{it.idProduto}</td>
+                      <td className="py-2 pr-3 font-mono">{it.ean || "—"}</td>
                       <td className="py-2 pr-3">{it.descricao}</td>
-                      <td className="py-2 pr-3">{it.minimo}</td>
-                      <td className="py-2 pr-3">{it.maximo}</td>
-                      <td className="py-2 pr-3">{it.estoqueAtual}</td>
-                      <td className="text-right">
+                      <td className="py-2 pr-3 text-right tabular-nums">{it.minimo}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums">{it.maximo}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums text-slate-500">{it.estoqueSnapshot}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums font-semibold">{it.estoqueAtual}</td>
+                      <td className="py-2 text-right">
                         <button
                           type="button"
                           onClick={() => handleDelete(it.idGondolaProduto)}
